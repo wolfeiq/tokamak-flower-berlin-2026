@@ -7,6 +7,7 @@ from urllib.request import Request, urlopen
 
 import pytest
 
+import dashboard as dashboard_module
 from dashboard import Dashboard, decode_logs, make_server
 
 
@@ -96,12 +97,34 @@ def test_worker_uses_flower_and_preserves_multiline_prompt(tmp_path):
     app.active = True
     app.worker('Compare sites.\nQuote: "test"')
     assert [c[0] for c in calls] == ["run", "ls", "log"]
-    assert "@marykor/personal" in calls[0]
+    # No federation flag unless the operator sets one: a hardcoded federation
+    # made every other presenter's submission fail with no run ID.
+    assert "--federation" not in calls[0]
     assert app.snapshot()["status"] == "finished:completed"
     assert app.snapshot()["run_id"] == "123"
     assert not app.active
     assert app.snapshot()["audit"] == [{"tool": "list_sites"}]
     assert Dashboard(tmp_path).snapshot()["report"] == "# Finding\nEvidence"
+
+
+def test_worker_passes_operator_federation_override(tmp_path, monkeypatch):
+    monkeypatch.setattr(dashboard_module, "FEDERATION", "@team/shared")
+    app = Dashboard(tmp_path)
+    calls = []
+
+    def cli(args):
+        calls.append(args)
+        if args[0] == "run":
+            return json.dumps({"success": True, "run-id": "123"})
+        if args[0] == "ls":
+            return json.dumps({"runs": [{"status": "finished:completed"}]})
+        return "report"
+
+    app.cli = cli
+    app.active = True
+    app.worker("Investigate")
+    run_call = calls[0]
+    assert run_call[run_call.index("--federation") + 1] == "@team/shared"
 
 
 def test_submission_failure_is_visible(tmp_path):

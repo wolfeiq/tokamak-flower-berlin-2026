@@ -1,77 +1,129 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fusion Investigator</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/thermal.js" defer></script><script src="/physics.js" defer></script></head>
-<body>
-<aside class="sidebar">
-  <a class="brand" href="/" aria-label="Fusion Investigator home"><span class="brand-icon">✳</span><span>fusion<span class="brand-sub">INVESTIGATOR</span></span></a>
-  <div class="workspace"><span class="avatar">M</span><div>marykor <small>Personal workspace</small></div><span class="chevron">⌄</span></div>
-  <div class="nav-label">WORKSPACE</div>
-  <nav><a class="selected" href="#overview"><span>◉</span> Investigation</a><a href="#thermal"><span>⌘</span> Facility evidence</a><a href="#physics"><span>◐</span> Physics playground</a><a href="#validation"><span>≋</span> Toy sandbox</a><a href="#report"><span>▤</span> Agent report</a></nav>
-  <div class="sidebar-bottom"><span class="flower-mark">✿</span><div>Built on Flower<small>AgentApp harness</small></div><span class="status-dot"></span></div>
-</aside>
-<main id="overview">
-  <header><div class="breadcrumb">Workspace <span>/</span> Fusion Investigator</div><a class="quiet-link flower-link" target="_blank" rel="noopener" href="https://flower.ai/federations/marykor/personal">Open in Flower ↗</a></header>
-  <section class="intro"><div><div class="eyebrow"><span class="status-dot"></span> CROSS-FACILITY RESEARCH</div><h1>Better evidence.<br><span>Before the next experiment.</span></h1><p>Investigate heating underperformance, compare partner findings,<br class="desktop"> and challenge a candidate under model uncertainty.</p></div><div class="orbital" aria-hidden="true"><svg viewBox="0 0 290 200"><defs><radialGradient id="glow"><stop stop-color="#FF5A36" stop-opacity=".15"/><stop offset="1" stop-color="#FF5A36" stop-opacity="0"/></radialGradient></defs><ellipse cx="145" cy="100" rx="125" ry="94" fill="url(#glow)"/><g fill="none" stroke="#FF5A36"><ellipse cx="145" cy="100" rx="92" ry="41"/><ellipse cx="145" cy="100" rx="92" ry="41" transform="rotate(60 145 100)"/><ellipse cx="145" cy="100" rx="92" ry="41" transform="rotate(120 145 100)"/></g><circle cx="145" cy="100" r="8" fill="#FF5A36"/><circle cx="232" cy="86" r="4" fill="#FF5A36"/><circle cx="89" cy="161" r="4" fill="#FF5A36"/></svg><span>LOCAL ANALYSIS · SHARED EVIDENCE</span></div></section>
-  <div class="notice"><span>◈</span><p><strong>Fusion Investigator + THERMAL</strong> Synthetic reduced 1D transport · facility stewards · controlled evidence releases · separate toy validation sandbox</p><span class="tag">RESEARCH</span></div>
-  <section class="work-grid">
-    <article class="panel investigation"><div class="panel-title"><h2><span class="section-number">01</span> Ask the investigator</h2><span class="pill">Flower hosted</span></div><p class="muted">An investigator asks facility stewards for evidence; each site gateway controls disclosure.</p><form id="run-form"><label for="prompt">INVESTIGATION BRIEF</label><textarea id="prompt" maxlength="12000" required>Investigate weak thermal response at facility-a. Ask stewards for context, balance and source evidence as needed. Compare facility-b and facility-c, reject unsuitable analogies, and recommend the next independent measurement at A.</textarea><div class="form-bottom"><span>Runs in @marykor/personal<br><small>Uses your Flower account and model quota</small></span><button class="primary" id="run-button" type="submit">Run investigation <span>↗</span></button></div></form><div id="run-error" class="error" role="alert" hidden></div></article>
-    <article class="panel run-card"><div class="panel-title"><h2>Latest agent run</h2><span id="run-status" class="pill">Loading</span></div><div class="run-metric"><span id="tool-count">—</span><span>tool calls<br><small>Site discovery → diagnosis → validation</small></span></div><div class="run-detail"><span>Runtime</span><strong>Flower AgentApp</strong></div><div class="run-detail"><span>Model</span><strong>GPT-5.6 Sol</strong></div><div class="run-detail"><span>Run ID</span><a id="run-id" target="_blank" rel="noopener">—</a></div><div class="run-footer"><span class="status-dot"></span><span id="run-caption" role="status">Reading saved run…</span></div></article>
-  </section>
-  <section id="thermal">
-    <div class="section-heading"><div><div class="eyebrow">THERMAL / EVIDENCE NETWORK</div><h2>Share the evidence. Keep the uncertainty.</h2></div><span class="pill" id="thermal-mode">Local rehearsal · no LLM</span></div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fusion Investigator — Berlin 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script src="/deck.js" defer></script><script src="/app.js" defer></script><script src="/thermal.js" defer></script><script src="/physics.js" defer></script></head>
+<body class="deck">
+<!-- Presentation shell. Every <section class="slide"> is auto-registered by
+     deck.js in DOM order — to add a visualization slide, add a section with a
+     kicker + h2 and it appears in the deck with navigation and progress. -->
+<div class="progress" id="deck-progress"></div>
+<div class="chrome top"><span><b>TOKAMAK FEDERATION</b> — FUSION INVESTIGATOR</span><span>FLOWER HACKATHON · <b>BERLIN 2026</b></span></div>
+<div class="chrome bottom">
+  <span id="deck-counter">01 / 08</span>
+  <span class="chrome-mid"><span class="status-dot"></span> synthetic study · advisory only · no formal privacy guarantee</span>
+  <span class="nav"><button id="deck-prev" aria-label="Previous slide">←</button><button id="deck-next" aria-label="Next slide">→</button></span>
+</div>
+
+<section class="slide" id="s-title">
+  <div class="slide-inner center">
+    <div class="kicker">BERLIN 2026 · FLOWER AGENTAPP</div>
+    <h1>Shared evidence.<br>Local control.</h1>
+    <p class="lede">A weak thermal response at one tokamak. Three facilities that will share <strong>bounded findings</strong> — and nothing else. An investigator agent that must earn every release.</p>
+    <div class="orbital" aria-hidden="true"><svg viewBox="0 0 290 200"><defs><radialGradient id="glow"><stop stop-color="#FF5A36" stop-opacity=".14"/><stop offset="1" stop-color="#FF5A36" stop-opacity="0"/></radialGradient></defs><ellipse cx="145" cy="100" rx="125" ry="94" fill="url(#glow)"/><g fill="none" stroke="#FF5A36"><ellipse cx="145" cy="100" rx="92" ry="41"/><ellipse cx="145" cy="100" rx="92" ry="41" transform="rotate(60 145 100)"/><ellipse cx="145" cy="100" rx="92" ry="41" transform="rotate(120 145 100)"/></g><circle cx="145" cy="100" r="8" fill="#FF5A36"/><circle cx="232" cy="86" r="4" fill="#FF5A36"/><circle cx="89" cy="161" r="4" fill="#FF5A36"/></svg></div>
+    <p class="mono faint">→ to advance · every element ahead is live</p>
+  </div>
+</section>
+
+<section class="slide" id="s-run">
+  <div class="slide-inner">
+    <div class="kicker">01 · LIVE AGENT</div>
+    <h2>Ask the investigator.</h2>
+    <div class="work-grid">
+      <article class="panel investigation"><div class="panel-title"><h3>Investigation brief</h3><span class="pill">Flower hosted</span></div><p class="muted">An investigator asks facility stewards for evidence; each site gateway controls disclosure.</p><form id="run-form"><label for="prompt">INVESTIGATION BRIEF</label><textarea id="prompt" maxlength="12000" required>Investigate weak thermal response at facility-a. Ask stewards for context, balance and source evidence as needed. Compare facility-b and facility-c, reject unsuitable analogies, and recommend the next independent measurement at A.</textarea><div class="form-bottom"><span>Runs in <span id="run-federation">your default federation</span><br><small>Uses your Flower account and model quota</small></span><button class="primary" id="run-button" type="submit">Run investigation <span>↗</span></button></div></form><div id="run-error" class="error" role="alert" hidden></div></article>
+      <article class="panel run-card"><div class="panel-title"><h3>Latest agent run</h3><span id="run-status" class="pill">Loading</span></div><div class="run-metric"><span id="tool-count">—</span><span>tool calls<br><small>Site discovery → diagnosis → validation</small></span></div><div class="run-detail"><span>Runtime</span><strong>Flower AgentApp</strong></div><div class="run-detail"><span>Model</span><strong>GPT-5.6 Sol</strong></div><div class="run-detail"><span>Run ID</span><a id="run-id" target="_blank" rel="noopener">—</a></div><div class="run-footer"><span class="status-dot"></span><span id="run-caption" role="status">Reading saved run…</span></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s-network">
+  <div class="slide-inner">
+    <div class="kicker">02 · THE EVIDENCE NETWORK</div>
+    <div class="heading-row"><h2>Three machines. One question.</h2><span class="pill" id="thermal-mode">Local rehearsal · no LLM</span></div>
     <div class="panel thermal-controls">
       <div><label for="thermal-source">EVIDENCE SOURCE</label><select id="thermal-source"><option value="local">Local rehearsal · no LLM</option><option value="hosted">Latest hosted agent run</option><option value="imported">Imported THERMAL report</option></select></div>
       <button class="primary" id="thermal-demo">Run local demonstration</button>
       <div><label for="thermal-file">IMPORT A RECORDED REPORT</label><input type="file" id="thermal-file" accept="application/json"></div>
-      <p class="small muted">Rehearsal calls the real release gateway with a fixed sequence. It does not invoke stewards or reset budgets. Hosted evidence appears after a merged-app run.</p>
       <div id="thermal-error" class="error" role="alert" hidden></div>
     </div>
     <div id="thermal-cards" class="site-grid thermal-cards"></div>
+    <div class="panel release-panel"><form id="release-form"><div><label for="release-site">FACILITY</label><select id="release-site"><option value="facility-a">A · requesting facility</option><option value="facility-b">B · partner facility</option><option value="facility-c">C · partner facility</option></select></div><div><label for="release-kind">EVIDENCE PRODUCT</label><select id="release-kind"><option value="context">Context · 1 unit</option><option value="balance">Balance · 2 units</option><option value="source_check">Source audit · 2 units</option><option value="raw_logs">Raw logs · prohibited</option></select></div><button type="submit" class="secondary" id="release-button">Request local release →</button></form><p class="small muted">context → balance → source audit · 5 policy units per facility and case · cached requests cost no additional units</p><p id="thermal-conclusion" class="thermal-conclusion" role="status">Release evidence to inspect what each facility permits.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s-boundary">
+  <div class="slide-inner">
+    <div class="kicker">03 · BOUNDARY DECISIONS</div>
+    <h2>What crossed. What was refused.</h2>
     <div class="thermal-grid">
-      <article class="panel"><div class="panel-title"><h2>Released radial profiles</h2><span class="pill">Coarsened summaries</span></div><p class="muted small">Normalised temperature versus normalised minor radius. Spatial profiles, not time traces.</p><svg id="thermal-chart" viewBox="0 0 560 230" role="img" aria-label="Released radial temperature profiles"></svg><p id="thermal-legend" class="small muted">No profile has been released.</p><p class="footnote">A partner's audit can suggest a measurement. It cannot establish the cause at another facility.</p></article>
-      <article class="panel"><div class="panel-title"><h2>Evidence and boundary decisions</h2><span id="thermal-progress" class="pill">0 / 0</span></div><div class="trail-controls"><button id="thermal-play" class="text-button">Play trail</button><button id="thermal-next" class="text-button">Next event</button><button id="thermal-rewind" class="text-button">Rewind view</button></div><ol id="thermal-trail"></ol></article>
+      <article class="panel"><div class="panel-title"><h3>Released radial profiles</h3><span class="pill">Coarsened summaries</span></div><p class="muted small">Normalised temperature versus normalised minor radius. Spatial profiles, not time traces.</p><svg id="thermal-chart" viewBox="0 0 560 230" role="img" aria-label="Released radial temperature profiles"></svg><p id="thermal-legend" class="small muted">No profile has been released.</p><p class="footnote">A partner's audit can suggest a measurement. It cannot establish the cause at another facility.</p></article>
+      <article class="panel"><div class="panel-title"><h3>Evidence trail</h3><span id="thermal-progress" class="pill">0 / 0</span></div><div class="trail-controls"><button id="thermal-play" class="text-button">Play trail</button><button id="thermal-next" class="text-button">Next event</button><button id="thermal-rewind" class="text-button">Rewind view</button></div><ol id="thermal-trail"></ol></article>
     </div>
-    <div class="panel release-panel"><form id="release-form"><div><label for="release-site">FACILITY</label><select id="release-site"><option value="facility-a">A · requesting facility</option><option value="facility-b">B · partner facility</option><option value="facility-c">C · partner facility</option></select></div><div><label for="release-kind">EVIDENCE PRODUCT</label><select id="release-kind"><option value="context">Context · 1 unit</option><option value="balance">Balance · 2 units</option><option value="source_check">Source audit · 2 units</option><option value="raw_logs">Raw logs · prohibited</option></select></div><button type="submit" class="secondary" id="release-button">Request local release →</button></form><p class="small muted">Manual rehearsal only · context → balance → source audit · 5 policy units per facility and case · cached requests cost no additional units · no formal privacy guarantee</p><p id="thermal-conclusion" class="thermal-conclusion" role="status">Release evidence to inspect what each facility permits.</p></div>
-  </section>
-  <section id="physics">
-    <div class="section-heading"><div><div class="eyebrow">RUN THE PHYSICS YOURSELF</div><h2>The simulation, inside the simulation.</h2></div><span class="pill">Reduced 1-D model · in-browser · not TORAX</span></div>
-    <div class="panel">
-      <div class="physics-grid">
-        <div class="controls">
-          <p class="muted">This is the same steady-state transport solve the facilities run behind their gateways — ported line for line to the browser, so the ambiguity the investigation is about can be reproduced by hand.</p>
-          <label for="physics-site">FACILITY</label>
-          <select id="physics-site"><option value="A">A · diiid_like · 2.0 T</option><option value="B">B · sparc_like · 12.2 T</option><option value="C">C · tcv_like · 1.44 T</option></select>
-          <div class="range-label"><label for="physics-power">DELIVERED HEATING</label><output id="physics-power-value" for="physics-power">1.00×</output></div>
-          <input id="physics-power" type="range" min="-3" max="0.18" step="0.01" value="0">
-          <div class="range-ticks"><span>0.1%</span><span>P_aux 1.00×</span><span>1.5×</span></div>
-          <div class="range-label"><label for="physics-assumed">ASSUMED / DELIVERED SOURCE</label><output id="physics-assumed-value" for="physics-assumed">×1.60</output></div>
-          <input id="physics-assumed" type="range" min="1" max="2" step="0.01" value="1.6">
-          <div class="range-ticks"><span>×1.00 audited</span><span>×1.60 commanded</span><span>×2.00</span></div>
-          <p class="small muted">Solid trace: this solve. Dashed: the device at nominal power. Stiff transport pins the gradient, so the profile barely moves while χ moves a lot — which is exactly why the source assumption matters.</p>
-        </div>
-        <div class="chart-area">
-          <div class="chart-header"><span>Solved T<sub>e</sub>(r) <small>steady-state power balance · bisection per cell</small></span><div class="legend"><span class="candidate-key"></span>This solve<span class="baseline-key"></span>Nominal</div></div>
-          <svg id="physics-chart" viewBox="0 0 560 230" role="img" aria-label="Solved radial temperature profile"></svg>
-          <div class="physics-readouts">
-            <div><strong id="physics-taxis">—</strong><small>CORE T_e</small></div>
-            <div><strong id="physics-chi">—</strong><small>TRUE χ (median)</small></div>
-            <div><strong id="physics-apparent">—</strong><small>APPARENT χ</small></div>
-          </div>
-          <div id="physics-verdict" class="physics-verdict" role="status">Adjust the sliders to reproduce the investigation.</div>
-          <div id="physics-device" class="physics-device"></div>
-        </div>
+  </div>
+</section>
+
+<section class="slide" id="physics">
+  <div class="slide-inner">
+    <div class="kicker">04 · RUN THE PHYSICS YOURSELF</div>
+    <div class="heading-row"><h2>The simulation, inside the simulation.</h2><span class="pill">Reduced 1-D model · in-browser · not TORAX</span></div>
+    <div class="physics-grid">
+      <div class="controls">
+        <p class="muted">The same steady-state transport solve the facilities run behind their gateways — ported line for line to the browser.</p>
+        <label for="physics-site">FACILITY</label>
+        <select id="physics-site"><option value="A">A · diiid_like · 2.0 T</option><option value="B">B · sparc_like · 12.2 T</option><option value="C">C · tcv_like · 1.44 T</option></select>
+        <div class="range-label"><label for="physics-power">DELIVERED HEATING</label><output id="physics-power-value" for="physics-power">1.00×</output></div>
+        <input id="physics-power" type="range" min="-3" max="0.18" step="0.01" value="0">
+        <div class="range-ticks"><span>0.1%</span><span>P_aux 1.00×</span><span>1.5×</span></div>
+        <div class="range-label"><label for="physics-assumed">ASSUMED / DELIVERED SOURCE</label><output id="physics-assumed-value" for="physics-assumed">×1.60</output></div>
+        <input id="physics-assumed" type="range" min="1" max="2" step="0.01" value="1.6">
+        <div class="range-ticks"><span>×1.00 audited</span><span>×1.60 commanded</span><span>×2.00</span></div>
+        <p class="small muted">Stiff transport pins the gradient: the profile barely moves while χ moves a lot — which is exactly why the source assumption matters.</p>
       </div>
-      <div class="twin-panel">
-        <div class="panel-title"><h2>Digital twin</h2><button id="twin-load" class="text-button">Load 3D reactor assembly →</button></div>
-        <iframe id="twin-frame" title="Interactive 3D tokamak assembly" hidden loading="lazy"></iframe>
-        <p class="twin-note">WebGL assembly of the selected machine — plasma core, vacuum vessel cutaway, TF coils, central solenoid. Generated from the same registry parameters as the transport solve.</p>
+      <div class="chart-area">
+        <div class="chart-header"><span>Solved T<sub>e</sub>(r) <small>steady-state power balance · bisection per cell</small></span><div class="legend"><span class="candidate-key"></span>This solve<span class="baseline-key"></span>Nominal</div></div>
+        <svg id="physics-chart" viewBox="0 0 560 230" role="img" aria-label="Solved radial temperature profile"></svg>
+        <div class="physics-readouts">
+          <div><strong id="physics-taxis">—</strong><small>CORE T_e</small></div>
+          <div><strong id="physics-chi">—</strong><small>TRUE χ (median)</small></div>
+          <div><strong id="physics-apparent">—</strong><small>APPARENT χ</small></div>
+        </div>
+        <div id="physics-verdict" class="physics-verdict" role="status">Adjust the sliders to reproduce the investigation.</div>
+        <div id="physics-device" class="physics-device"></div>
       </div>
-      <p class="footnote">Reduced model, stated plainly: cylindrical, electron channel only, no equilibrium, no pedestal physics, illustrative constants. TORAX-generated fixtures replace it wherever they are committed.</p>
     </div>
-  </section>
-  <section id="partners"><div class="section-heading"><div><div class="eyebrow">SEPARATE TOY SANDBOX</div><h2>Explore a simple heating controller.</h2></div><span class="muted small">These demo-a/b/c cases are independent of the THERMAL facilities above.</span></div><div id="site-cards" class="site-grid"><p>Loading toy evidence…</p></div></section>
-  <section class="panel validation" id="validation"><div class="panel-title"><h2><span class="section-number">02</span> Challenge the candidate</h2><span class="pill">Interactive · no LLM</span></div><div class="validation-grid"><div class="controls"><p class="muted">Run the actual toy validation tool. Compare against baseline across three parameter perturbations.</p><label for="site-select">REQUESTING SITE</label><select id="site-select"><option value="demo-a">Demo A · requesting facility</option><option value="demo-b">Demo B · partner facility</option><option value="demo-c">Demo C · partner facility</option></select><div class="range-label"><label for="power">HEATING POWER SCALE</label><output id="power-value" for="power">1.43×</output></div><input id="power" type="range" min="0.5" max="1.5" step="0.01" value="1.43"><div class="range-ticks"><span>0.50×</span><span>Baseline 1.00×</span><span>1.50×</span></div><button id="validate-button" class="secondary">Validate candidate →</button><p class="small muted">6 toy rollouts · 60 steps each · 0 physical shots</p><div id="validation-error" class="error" role="alert" hidden></div></div><div class="chart-area"><div class="chart-header"><span>Mean tracking error <small>↓ lower is better</small></span><div class="legend"><span class="baseline-key"></span>Baseline<span class="candidate-key"></span>Candidate</div></div><svg id="chart" viewBox="0 0 570 215" role="img" aria-label="Tracking error by model uncertainty scenario"></svg><div class="chart-labels"><span>Lower effectiveness</span><span>Fitted model</span><span>Higher effectiveness</span></div><div id="verdict" class="verdict" role="status">Computing validation…</div></div></div><p class="footnote">Model sensitivity only. A passing candidate does not authorize deployment or prove physical transfer.</p></section>
-  <section id="report" class="panel report-panel"><div class="panel-title"><h2><span class="section-number">03</span> Agent investigation report</h2><div class="report-actions"><button id="copy-report" class="text-button">Copy report</button><a class="quiet-link flower-link" target="_blank" rel="noopener" href="https://flower.ai/federations/marykor/personal">View run ↗</a></div></div><div class="report-meta"><span class="status-dot"></span> Actual hosted agent output <span>·</span> Kept separate from the interactive sandbox above</div><div id="report-text" class="report-text">Loading the completed investigation…</div><details><summary>Tool evidence <span id="audit-count"></span></summary><div id="audit"></div></details><details><summary>Runtime logs</summary><pre id="logs"></pre></details></section>
-  <footer><span>✳ Fusion Investigator</span><span>Between experiments. Across facilities.</span><span>Research prototype</span></footer>
-</main>
+  </div>
+</section>
+
+<section class="slide" id="s-twin">
+  <div class="slide-inner">
+    <div class="kicker">05 · DIGITAL TWIN</div>
+    <div class="heading-row"><h2>The machine itself.</h2><button id="twin-load" class="text-button">Load 3D reactor assembly →</button></div>
+    <iframe id="twin-frame" class="twin-full" title="Interactive 3D tokamak assembly" hidden loading="lazy"></iframe>
+    <p class="twin-note">WebGL assembly of the facility selected on the physics slide — plasma core, vacuum vessel cutaway, TF coils, central solenoid. Generated from the same registry parameters as the transport solve.</p>
+  </div>
+</section>
+
+<section class="slide" id="s-sandbox">
+  <div class="slide-inner">
+    <div class="kicker">06 · SEPARATE TOY SANDBOX</div>
+    <div class="heading-row"><h2>Challenge a candidate.</h2><span class="muted small">demo-a/b/c are independent of the THERMAL facilities</span></div>
+    <div id="site-cards" class="site-grid"><p>Loading toy evidence…</p></div>
+    <div class="panel validation"><div class="validation-grid"><div class="controls"><p class="muted">Run the actual toy validation tool against baseline across three parameter perturbations.</p><label for="site-select">REQUESTING SITE</label><select id="site-select"><option value="demo-a">Demo A · requesting facility</option><option value="demo-b">Demo B · partner facility</option><option value="demo-c">Demo C · partner facility</option></select><div class="range-label"><label for="power">HEATING POWER SCALE</label><output id="power-value" for="power">1.43×</output></div><input id="power" type="range" min="0.5" max="1.5" step="0.01" value="1.43"><div class="range-ticks"><span>0.50×</span><span>Baseline 1.00×</span><span>1.50×</span></div><button id="validate-button" class="secondary">Validate candidate →</button><p class="small muted">6 toy rollouts · 60 steps each · 0 physical shots</p><div id="validation-error" class="error" role="alert" hidden></div></div><div class="chart-area"><div class="chart-header"><span>Mean tracking error <small>↓ lower is better</small></span><div class="legend"><span class="baseline-key"></span>Baseline<span class="candidate-key"></span>Candidate</div></div><svg id="chart" viewBox="0 0 570 215" role="img" aria-label="Tracking error by model uncertainty scenario"></svg><div class="chart-labels"><span>Lower effectiveness</span><span>Fitted model</span><span>Higher effectiveness</span></div><div id="verdict" class="verdict" role="status">Computing validation…</div></div></div><p class="footnote">Model sensitivity only. A passing candidate does not authorize deployment or prove physical transfer.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="s-report">
+  <div class="slide-inner">
+    <div class="kicker">07 · AGENT REPORT</div>
+    <div class="heading-row"><h2>The advisory, verbatim.</h2><div class="report-actions"><button id="copy-report" class="text-button">Copy report</button><a class="quiet-link" id="flower-link" target="_blank" rel="noopener" href="https://flower.ai">Open in Flower ↗</a></div></div>
+    <div class="report-meta"><span class="status-dot"></span> Actual hosted agent output <span>·</span> kept separate from the interactive rehearsals</div>
+    <div class="report-scroll">
+      <div id="report-text" class="report-text">Loading the completed investigation…</div>
+      <details><summary>Tool evidence <span id="audit-count"></span></summary><div id="audit"></div></details>
+      <details><summary>Runtime logs</summary><pre id="logs"></pre></details>
+    </div>
+  </div>
+</section>
 </body></html>

@@ -17,7 +17,12 @@ from fusion_agent.sites import load_sites
 from fusion_agent.tools import Toolbox
 
 ROOT = Path(__file__).resolve().parent
-FEDERATION = "@marykor/personal"
+# Submitting to a hardcoded federation breaks for every other account: the
+# author's "@marykor/personal" is not joinable by a presenter logged in as
+# someone else, and the CLI then reports success=false with no run ID. Leave it
+# unset to use the logged-in account's default federation; override with
+# FUSION_FEDERATION=@account/name when a shared federation exists.
+FEDERATION = os.environ.get("FUSION_FEDERATION", "").strip() or None
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
@@ -114,7 +119,11 @@ class Dashboard:
 
     def snapshot(self):
         with self.lock:
-            return {**self.run, "active": self.active, "federation": FEDERATION}
+            return {
+                **self.run,
+                "active": self.active,
+                "federation": FEDERATION or "account default",
+            }
 
     def cli(self, args):
         executable = Path(sys.executable).with_name(
@@ -171,8 +180,7 @@ class Dashboard:
                         "run",
                         ".",
                         "supergrid",
-                        "--federation",
-                        FEDERATION,
+                        *(["--federation", FEDERATION] if FEDERATION else []),
                         "--run-config",
                         str(config),
                         "--format",
@@ -314,13 +322,14 @@ def make_server(app, port=8787):
                         "connect-src 'self'; frame-ancestors 'self'"
                     ),
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/style.css"):
+            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/deck.js", "/style.css"):
                 name = "index.html" if self.path == "/" else self.path[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
                     "thermal.js": "text/javascript",
                     "physics.js": "text/javascript",
+                    "deck.js": "text/javascript",
                     "style.css": "text/css",
                 }[name]
                 self.send(

@@ -46,7 +46,11 @@ async function refreshRun() {
     $('run-button').innerHTML=run.active?'Investigation running…':'Run investigation <span>↗</span>';
     $('tool-count').textContent=run.audit?.length ?? 0;
     $('run-id').textContent=run.run_id || 'Awaiting submission';
-    const link=run.run_id?`https://flower.ai/runs/${encodeURIComponent(run.run_id)}?from=federation&federation=%40marykor%2Fpersonal`:'https://flower.ai/federations/marykor/personal';
+    const link=run.run_id?`https://flower.ai/runs/${encodeURIComponent(run.run_id)}`:'https://flower.ai';
+    const fed=document.getElementById('run-federation');
+    if(fed&&run.federation)fed.textContent=run.federation;
+    const flower=document.getElementById('flower-link');
+    if(flower)flower.href=link;
     $('run-id').href=link; document.querySelectorAll('.flower-link').forEach(el=>el.href=link);
     const hasThermal=(run.audit||[]).some(call=>call.tool==='request_evidence');
     $('run-caption').textContent=run.active?'Agent is working · updates automatically':run.status.includes('completed')?(hasThermal?'Investigation completed · thermal evidence available':'Saved toy-only report · no THERMAL evidence'):run.status==='idle'?'Ready for an investigation':run.status;
