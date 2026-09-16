@@ -1,0 +1,53 @@
+[project]
+name = "hfmarl-fusion"
+version = "0.1.0"
+description = "Hierarchical federated multi-agent RL for research tokamaks, simulated in TORAX"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+
+dependencies = [
+    # TORAX is PINNED. v1.4.3 uses the flat `transport: {'model_name': ...}`
+    # config form; post-1.4.3 main replaced it with a `core_transport_models`
+    # registry. Unpinning silently breaks every device config in this repo.
+    # See TORAX_NOTES.md "Schema drift".
+    "torax==1.4.3",
+    "gymnasium>=1.0",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    # The six figures are deliverables (METRICS.md), not an optional extra.
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+# JAX with CUDA, for the WSL2 box. Read SETUP.md first: TORAX defaults to
+# float64, which runs at ~1/32 rate on consumer NVIDIA cards, so the GPU is
+# NOT automatically faster for this 1-D problem. Benchmark before committing.
+gpu = ["jax[cuda12]>=0.4.35"]
+
+# Phase 5. Not needed before then.
+fed = ["flwr>=1.12"]
+
+# Reference implementation + regression oracle. We do not build on gymtorax,
+# but we cross-check our env against it (see TORAX_NOTES.md "Build vs reuse").
+ref = ["gymtorax>=1.1.1"]
+
+dev = ["pytest>=8.0", "pytest-xdist>=3.6", "ruff>=0.6"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["hfmarl*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+markers = [
+    "torax: test requires a working TORAX install (slow, needs JIT compile)",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"

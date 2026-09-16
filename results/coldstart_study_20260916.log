@@ -1,0 +1,44 @@
+task        : moderate (30 steps/shot)
+tolerances  : sparc_like 0.0091  tcv_like 0.2212
+joiners     : ['sparc_like', 'tcv_like']   (leave-one-out)
+seeds       : 6   pretrain/incumbent: 80   joiner budget: 120
+merge rule  : geomedian   align: True   clip: 2.0   reject-if-worse: True
+scramble    : none (true coordinates)
+
+checkpoints : C:\Users\mothe\hfmarl-fusion\results\coldstart\20260916-065401_6df3978
+budgets     : joiner shots include probes, training and evaluations; add 5 upstream calibration shots once per joiner. Source shots are separate.
+=== sparc_like joins ['diiid_like', 'iter_like', 'tcv_like'] (mean distance 1.070) ===
+2026-09-16 06:54:05,622 [ WARNING] Falling back to legacy behavior as `profile_conditions.psi` is None. Future versions of TORAX will require `psi` to be provided if `initial_psi_mode` is PROFILE_CONDITIONS. Use `initial_psi_mode` to initialize psi from `j` or `geometry` and avoid this warning.
+    scratch seed 1/6 saved (120 joiner shots)
+    scratch seed 2/6 saved (120 joiner shots)
+    scratch seed 3/6 saved (120 joiner shots)
+    scratch seed 4/6 saved (120 joiner shots)
+    scratch seed 5/6 saved (120 joiner shots)
+    scratch seed 6/6 saved (120 joiner shots)
+  scratch                     688.0s
+    single_source seed 1/6 saved (120 joiner shots)
+    single_source seed 2/6 saved (120 joiner shots)
+    single_source seed 3/6 saved (120 joiner shots)
+    single_source seed 4/6 saved (120 joiner shots)
+    single_source seed 5/6 saved (120 joiner shots)
+    single_source seed 6/6 saved (120 joiner shots)
+  single_source              1110.1s
+    handover_merge seed 1/6 saved (120 joiner shots)
+    handover_merge seed 2/6 saved (120 joiner shots)
+    handover_merge seed 3/6 saved (120 joiner shots)
+    handover_merge seed 4/6 saved (120 joiner shots)
+    handover_merge seed 5/6 saved (120 joiner shots)
+    handover_merge seed 6/6 saved (120 joiner shots)
+  handover_merge             1882.7s
+    federated_uniform seed 1/6 saved (120 joiner shots)
+    federated_uniform seed 2/6 saved (120 joiner shots)
+    federated_uniform seed 3/6 saved (120 joiner shots)
+    federated_uniform seed 4/6 saved (120 joiner shots)
+    federated_uniform seed 5/6 saved (120 joiner shots)
+    federated_uniform seed 6/6 saved (120 joiner shots)
+  federated_uniform          6698.7s
+    federated_similarity seed 1/6 saved (120 joiner shots)
+    federated_similarity seed 2/6 saved (120 joiner shots)
+    federated_similarity seed 3/6 saved (120 joiner shots)
+    federated_similarity seed 4/6 saved (120 joiner shots)
+    federated_similarity seed 5/6 saved (120 joiner shots)

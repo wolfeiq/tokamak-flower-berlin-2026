@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+.jax_cache/
+*.nc
+results/**/*.npz
+results/**/*.nc
+.pytest_cache/
+.ruff_cache/
+results/figures_demo/
+
+# Editable-install metadata
+*.egg-info/
+
+# Regenerable run outputs. FINDINGS.md is the record that gets committed;
+# the plots and the raw gate JSON are reproduced by re-running the scripts.
+results/torax_plots/
+results/**/*.json
