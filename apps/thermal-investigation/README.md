@@ -40,11 +40,37 @@ returns to the investigator; steward prose is never an export channel.
 
 The Flower UI streams the final advisory report. `investigation-output/report.json`
 is written ON THE RUNTIME HOST. The HTML dashboard stays in the local checkout
-(Flower FABs exclude HTML). SuperGrid artifacts are not
-automatically downloaded: retrieve them using your deployment's artifact mechanism,
-or run locally with a SuperLink for the dashboard. The standalone page can open
-a downloaded report with its file picker. It replays recorded runs; it does not
+(Flower FABs exclude HTML).
+
+A deployment need not expose an artifact provider, in which case `flwr pull`
+fails with `ControlServicer initialized without artifact provider` even though
+the run itself completed. The AgentApp therefore fences its sanitized report
+into the run log, and this recovers it into a local dashboard:
+
+```bash
+uv run python -m thermal_investigation.fetch_report <run-id> supergrid
+uv run python -m http.server 8765 --bind 127.0.0.1 --directory investigation-output
+```
+
+The log carries exactly what `report.json` already contains: released evidence
+and gateway decisions. Raw fixtures, ground truth and steward prose are excluded
+before that point and never reach the log. The dashboard labels a recovered run
+RECORDED FLOWER RUN rather than SCRIPTED REPLAY. The standalone page can also
+open a report with its file picker. It replays recorded runs; it does not
 stream live inter-agent traffic.
+
+Live runs need `flwr login supergrid` plus an account entitled to start
+Deployment Runtime runs; without that entitlement `flwr run` returns
+`Entitlement error. Denied: Starting a run for Deployment Runtime is not allowed.`
+A stale token reports `Authentication failed` instead and is fixed by logging in
+again. Running against the local SuperLink (`flwr run .`) skips Flower's model
+routing and requires `FLWR_MODEL_API_KEY`, optionally with
+`FLWR_MODEL_API_ENDPOINT` pointing at any Open Responses-compatible provider.
+
+The agent chooses its own sequence, so a live trail differs from the replay and
+between runs: observed runs have requested five to seven products and have
+stopped at C's context once the flat profile made the analogy unusable, rather
+than spending budget on C's balance as the scripted trail does.
 
 Official documentation:
 - https://flower.ai/docs/agent/tutorials/write-your-first-agentapp.html

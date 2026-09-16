@@ -16,6 +16,24 @@ from .core import EVIDENCE, FACILITIES, Gateway, save_report
 app = AgentApp()
 MAX_TURNS = 8
 MAX_CALLS = 12
+FINAL_REPORT_TOKENS = 8000
+# A deployment runtime need not expose an artifact provider, and report.json is
+# written on the runtime host. The run log is then the only channel that reaches
+# the operator, so the sanitized report is fenced into it for local extraction.
+REPORT_BEGIN = "----- THERMAL-REPORT-BEGIN -----"
+REPORT_END = "----- THERMAL-REPORT-END -----"
+
+
+def publish(report):
+    """Fence the sanitized report into the run log.
+
+    This carries exactly what save_report already writes: released evidence and
+    gateway decisions. Raw fixtures, ground truth and steward prose are excluded
+    upstream and never reach this function.
+    """
+    print(REPORT_BEGIN)
+    print(json.dumps(report, allow_nan=False))
+    print(REPORT_END, flush=True)
 
 
 def function(name, description, properties):
@@ -30,6 +48,23 @@ REQUEST = function("request_evidence", "Ask a facility agent for one permitted e
 })
 RELEASE = function("release_requested", "Run the local policy gateway for the requested evidence. It may refuse.", {})
 DECLINE = function("decline", "Withhold the requested evidence.", {})
+
+
+def text_from(final):
+    """Recover output text from a terminal stream event when no deltas arrived."""
+    parts = []
+    for item in ((final or {}).get("response") or {}).get("output") or []:
+        for chunk in item.get("content") or []:
+            if chunk.get("type") == "output_text":
+                parts.append(chunk.get("text") or "")
+    return "".join(parts)
+
+
+def status_of(final):
+    """Describe why a terminal event carried no text, for the raised error."""
+    response = (final or {}).get("response") or {}
+    reason = (response.get("incomplete_details") or {}).get("reason")
+    return f"{response.get('status', 'unknown')}/{reason or 'no-reason'}"
 
 
 def facility_turn(client, model, gateway, site, kind):
@@ -102,14 +137,25 @@ def main(agent: AgentSession, context: Context) -> None:
     try:
         instructions, items = investigate(client, model, gateway, prompt)
         text = []
+        final = None
         # Only final evidence-based narrative is published to Flower's UI.
-        for event in client.responses.create(model=model, instructions=instructions + " Now provide your final advisory report using only evidence already obtained.", input=items, max_output_tokens=2200, stream=True):
+        # Reasoning models spend this budget on reasoning tokens before emitting
+        # any visible text, so it must cover both or the report arrives empty.
+        # The replayed history contains function_call items, so their tool must
+        # stay declared; tool_choice=none forbids further calls while keeping it valid.
+        for event in client.responses.create(model=model, instructions=instructions + " Now provide your final advisory report using only evidence already obtained.", input=items, tools=[REQUEST], tool_choice="none", max_output_tokens=FINAL_REPORT_TOKENS, stream=True):
             agent.events.emit(event.to_dict())
             if event.type in {"error", "response.failed"}:
                 raise RuntimeError("Final report failed")
             if event.type == "response.output_text.delta":
                 text.append(event.delta)
-        save_report(gateway, output, "live-flower", "".join(text))
+            elif event.type in {"response.completed", "response.incomplete"}:
+                final = event.to_dict()
+        narrative = "".join(text) or text_from(final)
+        if not narrative.strip():
+            # An empty advisory must never be published as a completed run.
+            raise RuntimeError(f"Final report produced no text (status={status_of(final)})")
+        publish(save_report(gateway, output, "live-flower", narrative))
     except Exception:
-        save_report(gateway, output, "live-flower-incomplete", "Run incomplete; inspect the runtime error. No diagnostic conclusion.")
+        publish(save_report(gateway, output, "live-flower-incomplete", "Run incomplete; inspect the runtime error. No diagnostic conclusion."))
         raise
