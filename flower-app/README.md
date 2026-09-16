@@ -5,6 +5,11 @@ This folder contains the Flower agent, local web frontend, site adapters, and it
 own tests and dependency lockfile. The repository's `hfmarl/`, `scripts/`,
 `configs/`, and root `tests/` belong to the original control experiments.
 
+**This is the working application, not the presentation.** The separate
+[`presentation/`](../presentation/README.md) folder contains the talk, speaker
+script and interactive 3D atlas. The application uses normal section navigation
+and keeps its investigation tools available without advancing slides.
+
 | Component | Purpose | What it establishes |
 |---|---|---|
 | This app: `flower-app/` | Between-experiment investigation with Flower AgentApp and a browser frontend | Working orchestration, analysis tools, and synthetic validation workflow |
@@ -82,7 +87,8 @@ Rehearsal ledgers live under `.dashboard/rehearsal/`. Agent/site ledgers use
 `FUSION_LEDGER_DIR` (default `.fusion-state/`). They are deliberately independent.
 
 **Run investigation** submits this AgentApp with the actual Flower CLI to
-`@marykor/personal`, using your existing `flwr login supergrid` session and model
+your account's default federation (or the `FUSION_FEDERATION` override), using
+your existing `flwr login supergrid` session and model
 quota. It polls Flower for the run's status and logs. Each submission is an
 independent investigation, using the packaged synthetic sites. Local TORAX
 checkpoints are not sent. Only one dashboard-submitted run is active at a time.

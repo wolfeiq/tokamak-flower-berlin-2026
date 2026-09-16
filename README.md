@@ -11,6 +11,7 @@ This repository keeps the following components separate:
 | Project | Location | Purpose |
 |---|---|---|
 | **Fusion app: Fusion Investigator + THERMAL** | [`flower-app/`](flower-app/README.md) | Between-experiment investigation, controlled cross-site evidence, radial profiles, and an independent toy sandbox |
+| **Presentation** | [`presentation/`](presentation/README.md) | Separate browser deck, speaker script, 3D geographic atlas and reactor assembly; no run-submission APIs |
 | **3D visualization / CAD viewer** | `app.py`, `assets/3d/`, [viewer notes](visual-additions.md) | Separate visualization and geometry-export work |
 | **Original TORAX/control experiments** | `hfmarl/`, `scripts/`, `configs/`, root `tests/` | Simulation studies and cold-start/control experiments described below |
 
@@ -21,6 +22,9 @@ checkpoint reader only reads existing simulation summaries. Hosted agent runs
 use synthetic sites unless separate site services are configured.
 
 **Open the frontend:** follow the [app quick start](flower-app/README.md#local-frontend).
+**Open the presentation:** `python presentation/serve.py` then visit
+<http://127.0.0.1:8788/>. The application remains on port 8787 with ordinary
+navigation. Presentation files and slide controls live only in `presentation/`.
 Source code is included; runtime logs, account credentials, virtual environments,
 and new experiment outputs are not part of the app commit.
 

@@ -252,7 +252,7 @@ def make_server(app, port=8787):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             # Default policy: no remote scripts, top page never framed. The
-            # only additions over the original are the deck's Google Fonts and
+            # only additions over the original are the interface's Google Fonts and
             # permission to frame our own /twin/ pages.
             self.send_header(
                 "Content-Security-Policy",
@@ -322,14 +322,13 @@ def make_server(app, port=8787):
                         "connect-src 'self'; frame-ancestors 'self'"
                     ),
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/deck.js", "/style.css"):
+            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/style.css"):
                 name = "index.html" if self.path == "/" else self.path[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
                     "thermal.js": "text/javascript",
                     "physics.js": "text/javascript",
-                    "deck.js": "text/javascript",
                     "style.css": "text/css",
                 }[name]
                 self.send(

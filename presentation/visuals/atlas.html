@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    --bg: #060d17;
+    --panel: rgba(12, 23, 36, 0.78);
+    --border: rgba(155, 191, 219, 0.14);
+    --text: #b4c8d9;
+    --muted: #71899f;
+    --bright: #ecf5fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  #vignette { position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: radial-gradient(ellipse at 50% 42%, transparent 36%, rgba(3,9,17,.38) 100%); }
+  #masthead { position: absolute; top: 25px; left: 28px; z-index: 10; pointer-events: none; }
+  .eyebrow { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #86a7bf; font-weight: 600; }
+  #masthead h1 { font-size: 24px; font-weight: 500; letter-spacing: -.045em; color: var(--bright); margin: 7px 0; }
+  #masthead p { font-size: 11px; color: var(--muted); }
+  .panel { position: absolute; z-index: 10; background: var(--panel);
+    backdrop-filter: blur(18px); border: 1px solid var(--border);
+    box-shadow: 0 12px 38px rgba(0,0,0,.15), inset 0 1px rgba(255,255,255,.025);
+    border-radius: 14px; padding: 14px 16px; font-size: 11px; line-height: 1.65; }
+  #legend { bottom: 58px; left: 24px; max-width: 320px; }
+  #legend-rows { display: flex; gap: 16px; margin-top: 8px; }
+  #legend .row { display: flex; align-items: center; gap: 6px; }
+  #legend .swatch { width: 5px; height: 18px; border-radius: 3px; flex: none; box-shadow: 0 0 12px currentColor; }
+  #legend .row small { display: block; font-size: 9px; color: var(--muted); }
+  #legend .cap { font-size: 10px; color: var(--muted); margin-top: 10px;
+    border-top: 1px solid var(--border); padding-top: 9px; }
+  #status { bottom: 78px; right: 24px; width: 210px; }
+  #status .big { font-size: 23px; font-weight: 500; letter-spacing: -.035em; color: var(--bright); margin: 3px 0 8px; }
+  #status .k { color: var(--muted); }
+  #send-status { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; color: #bddee9; }
+  #channel-status { color: var(--muted); font-size: 10px; margin-top: 5px; }
+  #controls { position: absolute; z-index: 10; bottom: 23px; right: 24px; background: none; border: none;
+    padding: 0; display: flex; gap: 7px; flex-wrap: wrap;
+    justify-content: flex-end; max-width: 60%; }
+  .btn { background: var(--panel); backdrop-filter: blur(9px);
+    border: 1px solid var(--border); color: var(--bright); padding: 9px 13px;
+    border-radius: 9px; font-size: 10px; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease; }
+  .btn:hover, .btn:focus-visible { border-color: #86c7e9; background: #152c40; outline: none; }
+  .btn.off { color: var(--muted); }
+  #hint { position: absolute; z-index: 10; bottom: 27px; left: 28px; color: var(--muted); font-size: 10px; }
+  #labels { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .site-label { position: absolute; transform: translate(-50%,-100%); text-align: center; white-space: nowrap;
+    color: var(--bright); padding: 5px 9px; border-radius: 8px; background: rgba(6,15,25,.68);
+    border: 1px solid rgba(145,187,211,.12); box-shadow: 0 6px 18px rgba(0,0,0,.13); }
+  .site-label strong { font-size: 12px; font-weight: 600; letter-spacing: .015em; }
+  .site-label small { display: block; color: #8fa7bb; font-size: 9px; margin-top: 3px; }
+  .site-label .site-dot { display: inline-block; height: 5px; width: 5px; border-radius: 50%; margin: 0 6px 2px 0;
+    background: var(--site-color); opacity: .45; }
+  .site-label.sending { border-color: color-mix(in srgb, var(--site-color) 35%, transparent); }
+  .site-label.sending .site-dot { opacity: 1; box-shadow: 0 0 9px var(--site-color); }
+  @media (max-width: 760px) {
+    #masthead { top: 18px; left: 18px; } #masthead h1 { font-size: 20px; }
+    #status { width: 155px; right: 12px; top: 12px; bottom: auto; padding: 10px; }
+    #status-sub, #channel-status { display: none; }
+    #legend { bottom: 65px; left: 12px; padding: 10px; } #legend .cap { display: none; }
+    #hint { display: none; } #controls { right: 12px; bottom: 15px; max-width: 100%; }
+  }
+  #tip { position: absolute; z-index: 20; display: none; pointer-events: none;
+    background: rgba(13, 17, 23, 0.96); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 11px; font-size: 0.70rem;
+    line-height: 1.55; max-width: 270px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+  #tip h4 { font-size: 0.82rem; color: var(--bright); margin-bottom: 3px; }
+  #tip .k { color: var(--muted); }
+  #tip table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+  #tip td { padding: 1px 0; }
+  #tip td:last-child { text-align: right; color: var(--bright); }
+
+    /* Keep the map visible when embedded in a narrow presentation pane. */
+    @media (max-width: 760px) {
+      #masthead p { max-width: 300px; font-size: 9px; }
+      #status { top: auto; bottom: 64px; width: 145px; }
+      #legend { max-width: 240px; }
+      #legend-rows { gap: 10px; }
+    }
+    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="vignette"></div>
+<div id="labels"></div>
+<div id="masthead">
+  <div class="eyebrow">Tokamak research network</div>
+  <h1>Federation atlas</h1>
+  <p>Illustrative policy exchange · nominal operating points · no live connections</p>
+</div>
+
+<div class="panel" id="legend">
+  <div class="eyebrow">Policy streams</div>
+  <div id="legend-rows"></div>
+  <div class="cap">
+    Stream density follows contribution weight.<br>
+    White returns the aggregate. Broken links were refused.
+  </div>
+</div>
+
+<div class="panel" id="status">
+  <div class="eyebrow">Aggregate recipient</div>
+  <div class="big" id="status-target">&mdash;</div>
+  <div class="k" id="status-sub"></div><div id="send-status"></div><div id="channel-status"></div>
+</div>
+
+<div id="controls">
+  <button class="btn" id="btn-flow">Animation: on</button>
+  <button class="btn" id="btn-spin">Orbit: off</button>
+  <button class="btn" id="btn-labels">Labels: on</button>
+  <button class="btn" id="btn-reset">Reset view</button>
+</div>
+
+<div id="hint">Click machines to send &nbsp; / &nbsp; Drag to orbit &nbsp; / &nbsp; Scroll to explore</div>
+<div id="tip"></div>
+
+<script>
+const DATA = {"target": "iter_like", "bandwidth": 1.1760071788289572, "useSimilarity": true, "rule": "geomedian", "round": 12, "clusters": [{"key": "thermal", "label": "Thermal", "color": "#ff7b3d", "payloadBytes": 776, "aggregated": false}, {"key": "particle", "label": "Particle", "color": "#2dd4bf", "payloadBytes": 708, "aggregated": false}, {"key": "current", "label": "Current", "color": "#a371f7", "payloadBytes": 708, "aggregated": false}], "devices": [{"key": "iter_like", "label": "ITER-like", "badge": "Giant / low-rho*", "color": "#58a6ff", "lat": 43.7085, "lon": 5.7561, "offsetLon": -5.0, "offsetLat": -6.0, "lab": "ITER Organization", "place": "Cadarache, France", "scale": 1.0, "epsilon": 0.3225806451612903, "distance": 0.0, "isTarget": true, "R": 6.2, "a": 2.0, "B0": 5.3, "kappa": 1.72, "Ip": 10.5, "state": {"rho_star": 0.0013631788135525004, "nu_star": 0.021595614140539503, "beta_N": 1.620813715522857, "q95": 3.2226605222734244, "mach": 0.0}, "roundAge": 0, "violationRate": 0.0, "coils": [{"cluster": "thermal", "label": "Thermal", "color": "#ff7b3d", "weight": 0.0, "kernel": 1.0, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": true, "agents": [{"name": "aux_heat", "available": true, "hi": 33000000.0, "units": "W"}, {"name": "ecrh", "available": true, "hi": 20000000.0, "units": "W"}, {"name": "icrh", "available": false, "hi": 20000000.0, "units": "W"}]}, {"cluster": "particle", "label": "Particle", "color": "#2dd4bf", "weight": 0.0, "kernel": 1.0, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": true, "agents": [{"name": "gas_puff", "available": true, "hi": 1e+22, "units": "s^-1"}]}, {"cluster": "current", "label": "Current", "color": "#a371f7", "weight": 0.0, "kernel": 1.0, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": true, "agents": [{"name": "ip", "available": true, "hi": 10500000.0, "units": "A"}]}]}, {"key": "sparc_like", "label": "SPARC-like", "badge": "Compact / high-field", "color": "#f778ba", "lat": 42.5376, "lon": -71.607, "offsetLon": 2.0, "offsetLat": 6.0, "lab": "Commonwealth Fusion Systems", "place": "Devens, Massachusetts, USA", "scale": 0.5802979248237575, "epsilon": 0.30810810810810807, "distance": 0.595314162628596, "isTarget": false, "R": 1.85, "a": 0.57, "B0": 12.2, "kappa": 1.97, "Ip": 8.7, "state": {"rho_star": 0.0019436946224675722, "nu_star": 0.03425360241551493, "beta_N": 0.9082288980928984, "q95": 3.0050968937558244, "mach": 0.0}, "roundAge": 0, "violationRate": 0.0, "coils": [{"cluster": "thermal", "label": "Thermal", "color": "#ff7b3d", "weight": 0.0, "kernel": 0.8797411698230191, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "aux_heat", "available": true, "hi": 25000000.0, "units": "W"}, {"name": "ecrh", "available": true, "hi": 5000000.0, "units": "W"}, {"name": "icrh", "available": false, "hi": 25000000.0, "units": "W"}]}, {"cluster": "particle", "label": "Particle", "color": "#2dd4bf", "weight": 0.0, "kernel": 0.8797411698230191, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "gas_puff", "available": true, "hi": 5e+21, "units": "s^-1"}]}, {"cluster": "current", "label": "Current", "color": "#a371f7", "weight": 0.0, "kernel": 0.8797411698230191, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "ip", "available": true, "hi": 8700000.0, "units": "A"}]}]}, {"key": "diiid_like", "label": "DIII-D-like", "badge": "Medium / low-A", "color": "#3fb950", "lat": 32.8944, "lon": -117.235, "offsetLon": -4.0, "offsetLat": -5.0, "lab": "General Atomics", "place": "San Diego, California, USA", "scale": 0.55417400697983, "epsilon": 0.4011976047904192, "distance": 1.1024173974629272, "isTarget": false, "R": 1.67, "a": 0.67, "B0": 2.0, "kappa": 1.8, "Ip": 1.5, "state": {"rho_star": 0.006028078586093949, "nu_star": 0.03409844497368641, "beta_N": 2.2482458999303385, "q95": 3.799073852295411, "mach": 0.0}, "roundAge": 0, "violationRate": 0.0, "coils": [{"cluster": "thermal", "label": "Thermal", "color": "#ff7b3d", "weight": 0.0, "kernel": 0.6444346147676112, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "aux_heat", "available": true, "hi": 20000000.0, "units": "W"}, {"name": "ecrh", "available": true, "hi": 6000000.0, "units": "W"}, {"name": "icrh", "available": false, "hi": 2000000.0, "units": "W"}]}, {"cluster": "particle", "label": "Particle", "color": "#2dd4bf", "weight": 0.0, "kernel": 0.6444346147676112, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "gas_puff", "available": true, "hi": 2e+21, "units": "s^-1"}]}, {"cluster": "current", "label": "Current", "color": "#a371f7", "weight": 0.0, "kernel": 0.6444346147676112, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "ip", "available": true, "hi": 1500000.0, "units": "A"}]}]}, {"key": "tcv_like", "label": "TCV-like", "badge": "Small / highly shaped", "color": "#d29922", "lat": 46.5191, "lon": 6.5668, "offsetLon": 6.0, "offsetLat": 5.0, "lab": "Swiss Plasma Center, EPFL", "place": "Lausanne, Switzerland", "scale": 0.41537556229557826, "epsilon": 0.2840909090909091, "distance": 1.6685456924698585, "isTarget": false, "R": 0.88, "a": 0.25, "B0": 1.44, "kappa": 1.5, "Ip": 0.25, "state": {"rho_star": 0.014190941139094079, "nu_star": 0.09495881686767148, "beta_N": 1.1744568133964453, "q95": 3.3238636363636362, "mach": 0.0}, "roundAge": 0, "violationRate": 0.0, "coils": [{"cluster": "thermal", "label": "Thermal", "color": "#ff7b3d", "weight": 0.0, "kernel": 0.36548540169416477, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "aux_heat", "available": true, "hi": 1300000.0, "units": "W"}, {"name": "ecrh", "available": true, "hi": 4500000.0, "units": "W"}, {"name": "icrh", "available": false, "hi": 100000.0, "units": "W"}]}, {"cluster": "particle", "label": "Particle", "color": "#2dd4bf", "weight": 0.0, "kernel": 0.36548540169416477, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "gas_puff", "available": true, "hi": 5e+20, "units": "s^-1"}]}, {"cluster": "current", "label": "Current", "color": "#a371f7", "weight": 0.0, "kernel": 0.36548540169416477, "staleness": 0.0, "admissible": false, "excluded": true, "isSelf": false, "agents": [{"name": "ip", "available": true, "hi": 250000.0, "units": "A"}]}]}], "server": {"lat": 72.0, "lon": -42.0}, "sending": [], "deviceOrder": ["iter_like", "sparc_like", "diiid_like", "tcv_like"], "participation": {"0000": {"clusters": {"thermal": {"aggregated": false, "effectivePeers": 0.0, "shift": null, "clipped": 0}, "particle": {"aggregated": false, "effectivePeers": 0.0, "shift": null, "clipped": 0}, "current": {"aggregated": false, "effectivePeers": 0.0, "shift": null, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "1000": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.0, "shift": 0.0, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.0, "shift": 0.0, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.0, "shift": 0.0, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 1.0, "admissible": true, "excluded": false}, "particle": {"weight": 1.0, "admissible": true, "excluded": false}, "current": {"weight": 1.0, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "0100": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.521340448660617, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.765639377973836, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.0, "shift": 6.027110621871563, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 1.0, "admissible": true, "excluded": false}, "particle": {"weight": 1.0, "admissible": true, "excluded": false}, "current": {"weight": 1.0, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "0010": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.0, "shift": 6.125766065399678, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.718495805893339, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.879093008736566, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 1.0, "admissible": true, "excluded": false}, "particle": {"weight": 1.0, "admissible": true, "excluded": false}, "current": {"weight": 1.0, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "0001": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.7375195871676725, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.4140506232311845, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.0, "shift": 5.45860924485826, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 1.0, "admissible": true, "excluded": false}, "particle": {"weight": 1.0, "admissible": true, "excluded": false}, "current": {"weight": 1.0, "admissible": true, "excluded": false}}}}, "1100": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.9918474416620504, "shift": 0.0, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.9918474416620504, "shift": 0.0, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.9918474416620504, "shift": 0.0, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.5319881354166179, "admissible": true, "excluded": false}, "particle": {"weight": 0.5319881354166179, "admissible": true, "excluded": false}, "current": {"weight": 0.5319881354166179, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.4680118645833821, "admissible": true, "excluded": false}, "particle": {"weight": 0.4680118645833821, "admissible": true, "excluded": false}, "current": {"weight": 0.4680118645833821, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "1010": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.9106711630548094, "shift": 0.0, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.9106711630548094, "shift": 0.0, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.9106711630548094, "shift": 0.0, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.6081117430998121, "admissible": true, "excluded": false}, "particle": {"weight": 0.6081117430998121, "admissible": true, "excluded": false}, "current": {"weight": 0.6081117430998121, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.3918882569001879, "admissible": true, "excluded": false}, "particle": {"weight": 0.3918882569001879, "admissible": true, "excluded": false}, "current": {"weight": 0.3918882569001879, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "1001": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.6448341316530177, "shift": 0.0, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.6448341316530177, "shift": 0.0, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.6448341316530177, "shift": 0.0, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.7323403082590959, "admissible": true, "excluded": false}, "particle": {"weight": 0.7323403082590959, "admissible": true, "excluded": false}, "current": {"weight": 0.7323403082590959, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.26765969174090415, "admissible": true, "excluded": false}, "particle": {"weight": 0.26765969174090415, "admissible": true, "excluded": false}, "current": {"weight": 0.26765969174090415, "admissible": true, "excluded": false}}}}, "0110": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.953441566346264, "shift": 4.313764950631101, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.953441566346264, "shift": 4.16895060623209, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.953441566346264, "shift": 4.132903524478484, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.5771914097554723, "admissible": true, "excluded": false}, "particle": {"weight": 0.5771914097554723, "admissible": true, "excluded": false}, "current": {"weight": 0.5771914097554723, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.4228085902445276, "admissible": true, "excluded": false}, "particle": {"weight": 0.4228085902445276, "admissible": true, "excluded": false}, "current": {"weight": 0.4228085902445276, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "0101": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.7085928696829835, "shift": 4.313764950631101, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.7085928696829835, "shift": 4.16895060623209, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.7085928696829835, "shift": 4.132903524478484, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.7064908426674051, "admissible": true, "excluded": false}, "particle": {"weight": 0.7064908426674051, "admissible": true, "excluded": false}, "current": {"weight": 0.7064908426674051, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.2935091573325948, "admissible": true, "excluded": false}, "particle": {"weight": 0.2935091573325948, "admissible": true, "excluded": false}, "current": {"weight": 0.2935091573325948, "admissible": true, "excluded": false}}}}, "0011": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 1.8582325934306556, "shift": 4.81185200885046, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 1.8582325934306556, "shift": 4.222469036021338, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 1.8582325934306556, "shift": 4.330562442427111, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.63810460656614, "admissible": true, "excluded": false}, "particle": {"weight": 0.63810460656614, "admissible": true, "excluded": false}, "current": {"weight": 0.63810460656614, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.36189539343385996, "admissible": true, "excluded": false}, "particle": {"weight": 0.36189539343385996, "admissible": true, "excluded": false}, "current": {"weight": 0.36189539343385996, "admissible": true, "excluded": false}}}}, "1110": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 2.910353337429471, "shift": 1.1306261291074808, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 2.910353337429471, "shift": 0.6720930551119271, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 2.910353337429471, "shift": 1.2037221147566382, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.3961689221902505, "admissible": true, "excluded": false}, "particle": {"weight": 0.3961689221902505, "admissible": true, "excluded": false}, "current": {"weight": 0.3961689221902505, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.3485261110551756, "admissible": true, "excluded": false}, "particle": {"weight": 0.3485261110551756, "admissible": true, "excluded": false}, "current": {"weight": 0.3485261110551756, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.25530496675457387, "admissible": true, "excluded": false}, "particle": {"weight": 0.25530496675457387, "admissible": true, "excluded": false}, "current": {"weight": 0.25530496675457387, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}}}, "1101": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 2.6427148914860497, "shift": 0.5588809264795416, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 2.6427148914860497, "shift": 0.05816945647615573, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 2.6427148914860497, "shift": 0.6784956694527557, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.4453893485343274, "admissible": true, "excluded": false}, "particle": {"weight": 0.4453893485343274, "admissible": true, "excluded": false}, "current": {"weight": 0.4453893485343274, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.3918273465063016, "admissible": true, "excluded": false}, "particle": {"weight": 0.3918273465063016, "admissible": true, "excluded": false}, "current": {"weight": 0.3918273465063016, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "tcv_like": {"thermal": {"weight": 0.16278330495937102, "admissible": true, "excluded": false}, "particle": {"weight": 0.16278330495937102, "admissible": true, "excluded": false}, "current": {"weight": 0.16278330495937102, "admissible": true, "excluded": false}}}}, "1011": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 2.608200812840716, "shift": 8.114139314682135e-09, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 2.608200812840716, "shift": 7.717884154956624e-09, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 2.608200812840716, "shift": 7.909200765524415e-09, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.49753223601423724, "admissible": true, "excluded": false}, "particle": {"weight": 0.49753223601423724, "admissible": true, "excluded": false}, "current": {"weight": 0.49753223601423724, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "diiid_like": {"thermal": {"weight": 0.3206269948503032, "admissible": true, "excluded": false}, "particle": {"weight": 0.3206269948503032, "admissible": true, "excluded": false}, "current": {"weight": 0.3206269948503032, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.1818407691354595, "admissible": true, "excluded": false}, "particle": {"weight": 0.1818407691354595, "admissible": true, "excluded": false}, "current": {"weight": 0.1818407691354595, "admissible": true, "excluded": false}}}}, "0111": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 2.699399154759933, "shift": 4.213312161854404, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 2.699399154759933, "shift": 3.9596334782618876, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 2.699399154759933, "shift": 4.115756269025127, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.0, "admissible": false, "excluded": true}, "particle": {"weight": 0.0, "admissible": false, "excluded": true}, "current": {"weight": 0.0, "admissible": false, "excluded": true}}, "sparc_like": {"thermal": {"weight": 0.46555497684357444, "admissible": true, "excluded": false}, "particle": {"weight": 0.46555497684357444, "admissible": true, "excluded": false}, "current": {"weight": 0.46555497684357444, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.34103183123246256, "admissible": true, "excluded": false}, "particle": {"weight": 0.34103183123246256, "admissible": true, "excluded": false}, "current": {"weight": 0.34103183123246256, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.19341319192396306, "admissible": true, "excluded": false}, "particle": {"weight": 0.19341319192396306, "admissible": true, "excluded": false}, "current": {"weight": 0.19341319192396306, "admissible": true, "excluded": false}}}}, "1111": {"clusters": {"thermal": {"aggregated": true, "effectivePeers": 3.5948293424043234, "shift": 1.3401241739699823, "clipped": 0}, "particle": {"aggregated": true, "effectivePeers": 3.5948293424043234, "shift": 0.7949850543029957, "clipped": 0}, "current": {"aggregated": true, "effectivePeers": 3.5948293424043234, "shift": 1.3575465505814621, "clipped": 0}}, "devices": {"iter_like": {"thermal": {"weight": 0.3460613322926238, "admissible": true, "excluded": false}, "particle": {"weight": 0.3460613322926238, "admissible": true, "excluded": false}, "current": {"weight": 0.3460613322926238, "admissible": true, "excluded": false}}, "sparc_like": {"thermal": {"weight": 0.3044444013016254, "admissible": true, "excluded": false}, "particle": {"weight": 0.3044444013016254, "admissible": true, "excluded": false}, "current": {"weight": 0.3044444013016254, "admissible": true, "excluded": false}}, "diiid_like": {"thermal": {"weight": 0.22301390136196333, "admissible": true, "excluded": false}, "particle": {"weight": 0.22301390136196333, "admissible": true, "excluded": false}, "current": {"weight": 0.22301390136196333, "admissible": true, "excluded": false}}, "tcv_like": {"thermal": {"weight": 0.12648036504378746, "admissible": true, "excluded": false}, "particle": {"weight": 0.12648036504378746, "admissible": true, "excluded": false}, "current": {"weight": 0.12648036504378746, "admissible": true, "excluded": false}}}}}};
+
+// Channel decks. Both ends of a link sit at the same height, so a link is
+// readable as "this channel" without following it.
+const DECK = { thermal: 3.0, particle: 0.0, current: -3.0 };
+const DEG = 0.45;
+const BASE_Y = 5;
+const sending = new Set(DATA.sending);
+function project(lon, lat, y = 0) { return new THREE.Vector3(lon * DEG, y, -lat * DEG); }
+const HUB_R     = 2.4;    // hub ring radius
+const COIL_R    = 2.05;   // device coil radius (before per-device scale)
+
+const stage = document.getElementById('stage');
+const tip = document.getElementById('tip');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060d17);
+
+
+const camera = new THREE.PerspectiveCamera(
+  48, stage.clientWidth / stage.clientHeight, 0.1, 500);
+const HOME = new THREE.Vector3(-25, 45, 22);
+const LOOK = new THREE.Vector3(-25, 0, -18);
+camera.position.copy(HOME);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(stage.clientWidth, stage.clientHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+stage.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.autoRotate = false;
+controls.autoRotateSpeed = 0.45;
+controls.minDistance = 8;
+controls.maxDistance = 240;
+controls.target.copy(LOOK);
+controls.maxPolarAngle = Math.PI * 0.48;
+function resetCamera() {
+  const fit=Math.max(1,1.75/(stage.clientWidth/stage.clientHeight));
+  camera.position.copy(HOME).sub(LOOK).multiplyScalar(fit).add(LOOK);
+  controls.target.copy(LOOK);
+  controls.update();
+}
+resetCamera();
+
+scene.add(new THREE.HemisphereLight(0xb7dcff, 0x101c2a, 1.15));
+const key = new THREE.DirectionalLight(0xd5eaff, 1.6);
+key.position.set(12, 22, 14);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x7bbdd1, 0.8);
+rim.position.set(-16, -8, -12);
+scene.add(rim);
+
+const ocean = new THREE.Mesh(new THREE.PlaneGeometry(360 * DEG, 180 * DEG),
+  new THREE.MeshBasicMaterial({color: new THREE.Color(0x091827).convertSRGBToLinear(), side: THREE.DoubleSide,toneMapped:false}));
+ocean.rotation.x = -Math.PI / 2;
+ocean.position.y = -0.04;
+scene.add(ocean);
+const graticule = [];
+for (let lon = -180; lon <= 180; lon += 30) graticule.push(project(lon,-90),project(lon,90));
+for (let lat = -90; lat <= 90; lat += 30) graticule.push(project(-180,lat),project(180,lat));
+scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(graticule),
+  new THREE.LineBasicMaterial({color: 0x264156,transparent:true,opacity:0.18})));
+const LAND = [[[107, 77], [114.1, 75.8], [109.4, 74.2], [113, 74], [113.5, 73.3], [115.6, 73.8], [123.2, 73], [123.3, 73.7], [127, 73.6], [128.6, 73], [129.1, 72.4], [128.5, 72], [131.3, 70.8], [132.3, 71.8], [139.9, 71.5], [139.1, 72.4], [140.5, 72.8], [149.5, 72.2], [153, 70.8], [159, 70.9], [159.8, 70.5], [159.7, 69.7], [160.9, 69.4], [167.8, 69.6], [169.6, 68.7], [170.8, 69], [170, 69.7], [170.5, 70.1], [175.7, 69.9], [180, 69], [180, 65], [177.4, 64.6], [179.4, 63], [179.2, 62.3], [173.7, 61.7], [170.3, 59.9], [168.9, 60.6], [163.5, 59.9], [162, 58.2], [163.2, 57.6], [163.1, 56.2], [162.1, 56.1], [161.7, 55.3], [162.1, 54.9], [160.4, 54.3], [160, 53.2], [158.5, 53], [158.2, 51.9], [156.8, 51], [155.4, 55.4], [155.9, 56.8], [156.8, 57.8], [158.4, 58.1], [163.7, 61.1], [164.5, 62.6], [160.1, 60.5], [159.3, 61.8], [156.7, 61.4], [154.2, 59.8], [155, 59.1], [151.3, 58.8], [151.3, 59.5], [149.8, 59.7], [142.2, 59], [135.1, 54.7], [138.2, 53.8], [139.9, 54.2], [141.3, 53.1], [141.4, 52.2], [140.1, 48.4], [138.2, 46.3], [134.9, 43.4], [133.5, 42.8], [132.3, 43.3], [127.5, 39.8], [129.5, 36.8], [129.1, 35.1], [126.5, 34.4], [126.1, 36.7], [126.9, 36.9], [124.7, 38.1], [125.3, 39.6], [124.3, 39.9], [121.1, 38.9], [122.2, 40.4], [121.6, 40.9], [118, 39.2], [117.5, 38.7], [118.9, 37.4], [122.4, 37.5], [122.5, 36.9], [121.1, 36.7], [119.2, 34.9], [120.2, 34.4], [121.9, 31.7], [121.3, 30.7], [122.1, 29.8], [121.7, 28.2], [118.7, 24.5], [115.9, 22.8], [110.8, 21.4], [110.4, 20.3], [109.9, 20.3], [109.9, 21.4], [108.5, 21.7], [105.9, 19.8], [105.7, 19.1], [108.9, 15.3], [109.3, 13.4], [109.2, 11.7], [105.2, 8.6], [105.1, 9.9], [103.5, 10.6], [102.6, 12.2], [100.8, 12.6], [101, 13.4], [100.1, 13.4], [99.2, 9.2], [103, 5.5], [104.2, 1.3], [101.4, 2.8], [100.1, 6.5], [98.5, 8.4], [98.3, 7.8], [98.8, 11.4], [97.2, 16.9], [95.4, 15.7], [94.2, 16], [94.3, 18.2], [91.4, 22.8], [90.5, 22.8], [90.3, 21.8], [87, 21.5], [86.5, 20.2], [82.2, 16.6], [80.3, 15.9], [79.9, 10.4], [77.5, 8], [73.5, 16], [72.6, 21.4], [70.5, 20.9], [69.2, 22.1], [69.3, 22.8], [66.4, 25.4], [61.5, 25.1], [57.4, 25.7], [56.5, 27.1], [54.7, 26.5], [51.5, 27.9], [50.1, 30.1], [48, 30], [50.8, 24.8], [51, 26], [51.6, 25.8], [51.8, 24], [54, 24.1], [56.4, 26.4], [56.8, 24.2], [58.7, 23.6], [59.8, 22.3], [57.8, 20.2], [57.7, 18.9], [55.3, 17.2], [52.4, 16.4], [52.2, 15.6], [48.7, 14], [43.5, 12.6], [42.6, 16.8], [39.1, 21.3], [38.5, 23.7], [34.6, 28.1], [34.9, 29.5], [33.9, 27.6], [32.4, 29.9], [35.7, 23.9], [35.5, 23.1], [36.9, 22], [37.5, 18.6], [39.3, 15.9], [43.3, 12.4], [42.7, 11.7], [44.6, 10.4], [51.1, 12], [51, 10.6], [47.7, 4.2], [40.3, -2.6], [39.2, -4.7], [38.8, -6.5], [39.4, -6.8], [39.2, -8.5], [40.5, -10.8], [40.8, -14.7], [39.5, -16.7], [34.8, -19.8], [35.6, -23.7], [32.6, -25.7], [32.2, -28.8], [28.2, -32.8], [25.8, -33.9], [22.6, -33.9], [19.6, -34.8], [18.4, -34.1], [18.2, -31.7], [15.2, -27.1], [14.3, -22.1], [11.8, -18.1], [11.8, -15.8], [13.7, -10.7], [11.9, -5], [8.8, -1.1], [9.8, 3.1], [9.4, 3.7], [8.5, 4.8], [5.9, 4.3], [4.3, 6.3], [1.9, 6.1], [-2, 4.7], [-4.6, 5.2], [-7.5, 4.3], [-9, 4.8], [-12.4, 7.3], [-14.8, 10.9], [-16.6, 12.2], [-17.6, 14.7], [-16.5, 16.1], [-16.1, 18.1], [-17, 21.9], [-14.4, 26.3], [-9.6, 29.9], [-9.3, 32.6], [-6.9, 34.1], [-5.9, 35.8], [-2.2, 35.2], [1.5, 36.6], [9.5, 37.4], [11.1, 36.9], [10.3, 33.8], [19.1, 30.3], [20.1, 31], [20.1, 32.2], [21.5, 32.8], [28.9, 30.9], [31, 31.6], [33.8, 31], [36, 34.6], [36.2, 36.7], [32.5, 36.1], [27.6, 36.7], [26.3, 38.2], [26.8, 39], [26.2, 39.5], [27.3, 40.4], [28.8, 40.5], [29.2, 41.2], [31.1, 41.1], [33.5, 42], [38.3, 40.9], [40.4, 41], [41.7, 42], [36.7, 45.2], [39.1, 47.3], [35, 46.3], [36.3, 45.1], [33.9, 44.4], [32.5, 45.3], [33.3, 46.1], [30.7, 46.6], [28.8, 44.9], [27.7, 42.6], [28.8, 41.1], [26.4, 40.2], [24.9, 40.9], [23.7, 40.7], [24.4, 40.1], [23.9, 40], [22.6, 40.3], [24, 37.7], [23.1, 37.9], [23.2, 36.4], [22.5, 36.4], [19.4, 40.3], [19.5, 41.7], [13.1, 45.7], [12.3, 45.4], [12.6, 44.1], [18.5, 40.2], [16.9, 40.4], [16.4, 39.8], [17.1, 38.9], [16.1, 38], [15.4, 40], [8.9, 44.4], [6.5, 43.1], [3.1, 43.1], [3, 41.9], [0.8, 41], [-0.3, 39.3], [0.1, 38.7], [-2.1, 36.7], [-4.4, 36.7], [-5.4, 35.9], [-6.5, 36.9], [-8.9, 36.9], [-8.8, 38.3], [-9.5, 38.7], [-8.8, 40.8], [-9.4, 43], [-8, 43.7], [-1.9, 43.4], [-1.4, 44], [-1.2, 46], [-4.5, 48], [-4.6, 48.7], [-1.6, 48.6], [-1.9, 49.8], [-1, 49.3], [1.3, 50.1], [1.6, 50.9], [3.8, 51.6], [4.7, 53.1], [8.1, 53.5], [8.8, 54], [8.1, 55.5], [8.5, 57.1], [10.6, 57.7], [10.3, 56.9], [10.9, 56.5], [9.7, 55.5], [10.9, 54], [12.5, 54.5], [14.1, 53.8], [17.6, 54.9], [19.7, 54.4], [21.3, 55.2], [21.6, 57.4], [22.5, 57.8], [24.1, 57], [24.4, 58.4], [23.3, 59.2], [29.1, 60], [28.1, 60.5], [22.9, 59.8], [21.3, 60.7], [21.5, 63.2], [25.4, 65.1], [23.9, 66], [22.2, 65.7], [21.2, 65], [21.4, 64.4], [17.8, 62.7], [17.1, 61.3], [18.8, 60.1], [16.8, 58.7], [15.9, 56.1], [12.9, 55.4], [10.4, 59.5], [8.4, 58.3], [5.7, 58.6], [5, 62], [10.5, 64.5], [14.8, 67.8], [19.2, 69.8], [23, 70.2], [24.5, 71], [28.2, 71.2], [31.3, 70.5], [30, 70.2], [31.1, 69.6], [36.5, 69.1], [41.1, 67.5], [41.1, 66.8], [38.4, 66], [33.2, 66.6], [34.8, 65.9], [34.9, 64.4], [37, 63.8], [36.5, 64.8], [37.2, 65.1], [39.6, 64.5], [40.4, 64.8], [39.8, 65.5], [42.1, 66.5], [43.9, 66.1], [44.5, 66.8], [43.5, 68.6], [46.3, 68.3], [46.8, 67.7], [45.6, 67.6], [45.6, 67], [46.3, 66.7], [53.7, 68.9], [54.5, 68.8], [53.5, 68.2], [58.8, 68.9], [59.9, 68.3], [61.1, 68.9], [60, 69.5], [60.6, 69.9], [68.5, 68.1], [69.2, 68.6], [66.9, 69.5], [66.7, 71], [69.2, 72.8], [72.6, 72.8], [71.8, 71.4], [72.8, 70.4], [72.6, 69], [73.7, 68.4], [71.3, 66.3], [72.4, 66.2], [75.1, 67.8], [74.5, 68.3], [74.9, 69], [73.6, 69.6], [74.4, 70.6], [73.1, 71.4], [74.9, 72.1], [74.7, 72.8], [75.7, 72.3], [75.3, 71.3], [76.4, 71.2], [75.9, 71.9], [77.6, 72.3], [81.5, 71.8], [80.5, 73.6], [86.8, 73.9], [86, 74.5], [87.2, 75.1], [100.8, 76.4], [104.4, 77.7], [106.1, 77.4], [104.7, 77.1], [107, 77]], [[-90.5, 69.5], [-90.6, 68.5], [-89.2, 69.3], [-88, 68.6], [-88.3, 67.9], [-87.4, 67.2], [-85.6, 68.8], [-85.5, 69.9], [-82.6, 69.7], [-81.3, 69.2], [-82, 68.1], [-81.3, 67.6], [-83.3, 66.4], [-85.8, 66.6], [-87.3, 64.8], [-93.2, 62], [-94.2, 60.9], [-94.7, 58.9], [-93.2, 58.8], [-92.3, 57.1], [-90.9, 57.3], [-85, 55.3], [-82.3, 55.1], [-82.1, 53.3], [-79.9, 51.2], [-78.6, 52.6], [-79.8, 54.7], [-76.5, 56.5], [-78.5, 58.8], [-77.3, 59.9], [-78.1, 62.3], [-73.8, 62.4], [-71.4, 61.1], [-69.6, 61.1], [-69.3, 59], [-67.6, 58.2], [-64.6, 60.3], [-61.4, 57], [-61.8, 56.3], [-57.3, 54.6], [-55.8, 53.3], [-55.7, 52.1], [-60, 50.2], [-66.4, 50.2], [-71.1, 46.8], [-68.7, 48.3], [-65.1, 49.2], [-64.2, 48.7], [-65.1, 48.1], [-64.5, 46.2], [-61.5, 45.9], [-60.5, 47], [-59.8, 45.9], [-65.4, 43.5], [-66.1, 43.6], [-66.2, 44.5], [-64.4, 45.3], [-67.1, 45.1], [-70.7, 43], [-70, 41.6], [-73.7, 40.9], [-71.9, 40.9], [-74, 40.8], [-74.9, 38.9], [-75.5, 39.5], [-75.1, 38.4], [-75.9, 37.2], [-76.3, 39.2], [-76.3, 38.1], [-77, 38.2], [-76.3, 37.9], [-75.7, 35.6], [-81.3, 31.4], [-80.1, 26.9], [-80.4, 25.2], [-81.7, 25.9], [-82.9, 29.1], [-84.1, 30.1], [-85.1, 29.6], [-86.4, 30.4], [-89.2, 30.3], [-89.2, 29.3], [-90.2, 29.1], [-93.8, 29.7], [-96.6, 28.3], [-97.4, 27.4], [-97.9, 22.4], [-96.3, 19.3], [-94.4, 18.1], [-92, 18.7], [-90.8, 19.3], [-90.3, 21], [-87.1, 21.5], [-88.9, 15.9], [-85, 16], [-83.4, 15.3], [-83.8, 11.1], [-81.4, 8.8], [-79.6, 9.6], [-76.8, 8.6], [-74.9, 11.1], [-73.4, 11.2], [-71.8, 12.4], [-71.1, 12.1], [-71.9, 11.4], [-71.7, 9.1], [-71, 9.9], [-71.4, 11], [-70.2, 11.4], [-69.9, 12.2], [-68.2, 10.6], [-64.9, 10.1], [-61.9, 10.7], [-62.7, 10.4], [-62.4, 9.9], [-60.8, 9.4], [-60.7, 8.6], [-59.1, 8], [-57.1, 6], [-54, 5.8], [-51.3, 4.2], [-50, 1.7], [-50.4, -0.1], [-48.6, -0.2], [-48.6, -1.2], [-47.8, -0.6], [-44.9, -1.6], [-44.6, -2.7], [-40, -2.9], [-37.2, -4.8], [-35.6, -5.1], [-34.7, -7.3], [-35.1, -9], [-38.7, -13.1], [-39.3, -17.9], [-40.9, -21.9], [-42, -23], [-44.6, -23.4], [-47.6, -24.9], [-48.5, -25.9], [-48.9, -28.7], [-53.8, -34.4], [-56.2, -34.9], [-58.4, -33.9], [-56.8, -36.9], [-57.7, -38.2], [-59.2, -38.7], [-62.3, -38.8], [-62.1, -40.7], [-62.7, -41], [-65.1, -41.1], [-65, -42.1], [-63.5, -42.6], [-65.2, -43.5], [-65.6, -45], [-67.3, -45.6], [-67.6, -46.3], [-65.6, -47.2], [-66, -48.1], [-69.1, -50.7], [-68.2, -52.3], [-70.8, -52.9], [-71, -53.8], [-74.9, -52.3], [-75.6, -48.7], [-74.1, -46.9], [-75.6, -46.6], [-74.4, -44.1], [-73.2, -44.5], [-72.7, -42.4], [-73.4, -42.1], [-73.7, -43.4], [-74.3, -43.2], [-73.2, -39.3], [-73.6, -37.2], [-71.4, -32.4], [-70.2, -19.8], [-70.4, -18.3], [-71.5, -17.4], [-76, -14.6], [-79.8, -7.2], [-81.2, -6.1], [-81.4, -4.7], [-79.8, -2.7], [-81, -2.2], [-80.9, -1.1], [-80.1, 0.8], [-78.9, 1.4], [-77.1, 3.8], [-78.2, 8.3], [-79.6, 8.9], [-80.5, 8.1], [-80, 7.5], [-80.9, 7.2], [-81.1, 7.8], [-83.5, 8.4], [-85, 10.1], [-85.1, 9.6], [-85.7, 9.9], [-85.7, 11.1], [-87.5, 13.3], [-91.2, 13.9], [-94.7, 16.2], [-96.6, 15.7], [-103.5, 18.3], [-105.5, 19.9], [-105.3, 21.4], [-106, 22.8], [-112.2, 29], [-113.1, 31.2], [-114.8, 31.8], [-114.7, 30.2], [-109.4, 23.2], [-110, 22.8], [-112.2, 24.7], [-112.3, 26], [-115.1, 27.7], [-114.2, 28.6], [-115.5, 29.6], [-117.3, 33], [-120.6, 34.6], [-124.4, 40.3], [-123.9, 45.5], [-124.7, 48.2], [-123.1, 48], [-122.6, 47.1], [-122.8, 49], [-127.4, 50.8], [-127.9, 52.3], [-129.1, 52.8], [-134.1, 58.1], [-147.1, 60.9], [-148.2, 60.7], [-148, 60], [-151.7, 59.2], [-150.6, 61.3], [-154, 59.4], [-153.3, 58.9], [-154.2, 58.1], [-158.4, 56], [-164.8, 54.4], [-157.7, 57.6], [-157, 58.9], [-162, 58.7], [-161.9, 59.6], [-163.8, 59.8], [-166.1, 61.5], [-164.6, 63.1], [-160.8, 63.8], [-161.5, 64.4], [-160.8, 64.8], [-165, 64.4], [-168.1, 65.7], [-164.5, 66.6], [-161.7, 66.1], [-166.8, 68.4], [-161.9, 70.3], [-156.6, 71.4], [-136.5, 68.9], [-129.8, 70.2], [-129.1, 69.8], [-128.1, 70.5], [-125.8, 69.5], [-124.4, 70.2], [-124.3, 69.4], [-121.5, 69.8], [-113.9, 68.4], [-115.3, 67.9], [-109.9, 68], [-108.9, 67.4], [-107.8, 67.9], [-108.8, 68.3], [-108.2, 68.7], [-106.2, 68.8], [-101.5, 67.6], [-98.4, 67.8], [-98.6, 68.4], [-97.7, 68.6], [-96.1, 68.2], [-96.1, 67.3], [-94.2, 69.1], [-96.5, 70.1], [-96.4, 71.2], [-95.2, 71.9], [-91.5, 70.2], [-92.4, 69.7], [-90.5, 69.5]], [[-58.6, -64.2], [-62, -64.8], [-62.6, -65.5], [-62.1, -66.2], [-65.7, -68], [-61.8, -70.7], [-60.8, -73.7], [-64.4, -75.3], [-70.6, -76.6], [-77.2, -76.7], [-73.7, -77.9], [-77.9, -78.4], [-78, -79.2], [-75.4, -80.3], [-59.7, -82.4], [-58.2, -83.2], [-49.8, -81.7], [-42.8, -82.1], [-40.8, -81.4], [-28.5, -80.3], [-29.7, -79.3], [-35.6, -79.5], [-35.8, -78.3], [-17.5, -75.1], [-15.7, -74.5], [-15.4, -74.1], [-16.5, -73.9], [-15.4, -73.1], [-10.3, -71.3], [-7.4, -71.7], [-6.9, -70.9], [-0.2, -71.6], [7.7, -69.9], [10.8, -70.8], [13.4, -70], [27.1, -70.5], [32, -69.7], [33.9, -68.5], [38.6, -69.8], [54.5, -65.8], [61.4, -68], [64.1, -67.4], [68.9, -67.9], [69.7, -69.2], [67.8, -70.3], [69.1, -70.7], [67.9, -71.9], [69.9, -72.3], [73.9, -69.9], [77.6, -69.5], [82.8, -67.2], [86.8, -67.2], [88, -66.2], [89.7, -67.2], [95.8, -67.4], [99.7, -67.2], [102.8, -65.6], [106.2, -66.9], [113.6, -65.9], [119.8, -67.3], [123.2, -66.5], [134.8, -66.2], [135.1, -65.3], [137.5, -67], [145.5, -66.9], [148.8, -68.4], [154.3, -68.6], [161.6, -70.6], [171.2, -71.7], [169.3, -73.7], [166.1, -74.4], [163.6, -76.2], [163.5, -77.1], [164.7, -78.2], [167, -78.8], [161.8, -79.2], [159.8, -80.9], [169.4, -83.8], [180, -84.7], [180, -90], [-180, -90], [-180, -84.7], [-179.1, -84.1], [-174.4, -84.5], [-170, -83.9], [-158.1, -85.4], [-143.1, -85], [-142.9, -84.6], [-153.6, -83.7], [-152.9, -82], [-156.8, -81.1], [-150.6, -81.3], [-146.4, -80.3], [-149.5, -79.4], [-155.3, -79.1], [-158.1, -78], [-158.4, -76.9], [-151.3, -77.4], [-146.1, -76.5], [-146.2, -75.4], [-135.2, -74.3], [-121.1, -74.5], [-113.9, -73.7], [-112.3, -74.7], [-107.6, -75.2], [-100.1, -74.9], [-102.5, -74.1], [-103.7, -72.6], [-96.3, -73.6], [-90.1, -73.3], [-89.2, -72.6], [-81.5, -73.9], [-80.3, -73.1], [-74.9, -73.9], [-67.4, -72.5], [-68.5, -69.7], [-67.4, -68.1], [-67.7, -67.3], [-63, -64.6], [-57.2, -63.5], [-58.6, -64.2]], [[-27.1, 83.5], [-20.8, 82.7], [-31.9, 82.2], [-22.1, 81.7], [-23.2, 81.2], [-15.8, 81.9], [-12.2, 81.3], [-20, 80.2], [-17.7, 80.1], [-19.7, 78.8], [-19.7, 77.6], [-18.5, 77], [-21.7, 76.6], [-19.8, 76.1], [-19.6, 75.2], [-20.7, 75.2], [-19.4, 74.3], [-21.6, 74.2], [-20.4, 73.8], [-20.8, 73.5], [-23.6, 73.3], [-22.3, 72.2], [-24.8, 72.3], [-22.1, 71.5], [-21.8, 70.7], [-23.5, 70.5], [-25.5, 71.4], [-25.2, 70.8], [-26.4, 70.2], [-22.3, 70.1], [-27.7, 68.5], [-31.8, 68.1], [-34.2, 66.7], [-39.8, 65.5], [-41.2, 63.5], [-42.8, 62.7], [-42.4, 61.9], [-43.4, 60.1], [-48.3, 60.9], [-51.6, 63.6], [-54, 67.2], [-53, 68.4], [-51.5, 68.7], [-50.9, 69.9], [-54.7, 69.6], [-54.4, 70.8], [-51.4, 70.6], [-55.8, 71.7], [-54.7, 72.6], [-58.6, 75.5], [-68.5, 76.1], [-71.4, 77], [-66.8, 77.4], [-73.3, 78], [-65.7, 79.4], [-65.3, 79.8], [-68, 80.1], [-62.2, 81.3], [-62.7, 81.8], [-50.4, 82.4], [-44.5, 81.7], [-46.8, 82.6], [-38.6, 83.5], [-27.1, 83.5]], [[143.6, -13.8], [145.4, -15], [146.4, -19], [148.8, -20.4], [149.7, -22.3], [150.7, -22.4], [153.1, -26.1], [153.6, -28.1], [152.9, -31.6], [150.3, -35.7], [150, -37.4], [146.3, -39], [144.9, -38.4], [145, -37.9], [143.6, -38.8], [140.6, -38], [139.6, -36.1], [138.1, -35.6], [138.2, -34.4], [136.8, -35.3], [137.8, -32.9], [136, -34.9], [134.3, -32.6], [131.3, -31.5], [126.1, -32.2], [124.2, -33], [123.7, -33.9], [119.9, -34], [118, -35.1], [115, -34.2], [115.7, -31.6], [113.3, -26.1], [113.8, -26.5], [113.4, -25.6], [114.2, -26.3], [113.4, -24.4], [114.1, -21.8], [114.2, -22.5], [116.7, -20.7], [120.9, -19.7], [123, -16.4], [123.9, -17.1], [123.5, -16.6], [125.7, -14.2], [127.1, -13.8], [129.6, -15], [130.6, -12.5], [132.6, -12.1], [131.8, -11.3], [132.4, -11.1], [135.3, -12.2], [136.5, -11.9], [137, -12.4], [135.5, -15], [140.2, -17.7], [141.3, -16.4], [142.5, -10.7], [143.6, -13.8]], [[-86.6, 73.2], [-85.8, 72.5], [-84.9, 73.3], [-82.3, 73.8], [-80.6, 72.7], [-80.7, 72.1], [-77.8, 72.7], [-74.1, 71.3], [-72.2, 71.6], [-68.8, 70.5], [-67, 69.2], [-68.8, 68.7], [-61.9, 66.9], [-63.9, 65], [-66.7, 66.4], [-68, 66.3], [-68.1, 65.7], [-65.3, 64.4], [-64.7, 63.4], [-65, 62.7], [-68.8, 63.7], [-66.2, 61.9], [-71, 62.9], [-74.8, 64.7], [-77.7, 64.2], [-78.6, 64.6], [-77.9, 65.3], [-74, 65.5], [-74.3, 65.8], [-72.7, 67.3], [-72.9, 67.7], [-79, 70.2], [-84.9, 70], [-88.7, 70.4], [-89.5, 70.8], [-88.5, 71.2], [-89.9, 71.2], [-90.2, 72.2], [-89.4, 73.1], [-85.8, 73.8], [-86.6, 73.2]], [[134.1, -1.2], [134.4, -2.8], [135.5, -3.4], [136.3, -2.3], [138.3, -1.7], [144.6, -3.9], [146, -5.5], [147.6, -6.1], [147.2, -7.4], [150.7, -10.6], [147.9, -10.1], [146, -8.1], [144.7, -7.6], [142.6, -9.3], [139.1, -8.1], [137.6, -8.4], [138.7, -7.3], [137.9, -5.4], [133.7, -3.5], [133, -4.1], [132, -2.8], [133.7, -2.2], [132.2, -2.2], [130.5, -0.9], [132.4, -0.4], [134.1, -1.2]], [[-68.5, 83.1], [-61.9, 82.6], [-67.7, 81.5], [-65.5, 81.5], [-71.2, 79.8], [-76.9, 79.3], [-75.5, 79.2], [-76.2, 79], [-75.4, 78.5], [-79.8, 77.2], [-77.9, 76.8], [-80.6, 76.2], [-89.5, 76.5], [-89.6, 77], [-87.8, 77.2], [-88.3, 77.9], [-85, 77.5], [-88, 78.4], [-85.1, 79.3], [-86.9, 80.3], [-81.8, 80.5], [-87.6, 80.5], [-91.6, 81.9], [-79.3, 83.1], [-68.5, 83.1]], [[-3, 58.6], [-4.1, 57.6], [-2, 57.7], [-3.1, 56], [-2.1, 55.9], [0.5, 52.9], [1.7, 52.7], [1.1, 51.8], [1.4, 51.3], [-5.2, 50], [-5.8, 50.2], [-3.4, 51.4], [-5.3, 52], [-4.2, 52.3], [-4.6, 53.5], [-3.1, 53.4], [-2.9, 54], [-4.8, 54.8], [-5, 55.8], [-5.6, 55.3], [-6.1, 56.8], [-5, 58.6], [-3, 58.6]], [[-114.2, 73.1], [-114.7, 72.7], [-109.9, 73], [-108.2, 71.7], [-107.7, 72.1], [-108.4, 73.1], [-106.5, 73.1], [-105.4, 72.7], [-104.5, 71], [-101.1, 69.6], [-102.7, 69.5], [-102.4, 68.8], [-106, 69.2], [-113.3, 68.5], [-117.3, 70], [-112.4, 70.4], [-117.9, 70.5], [-118.4, 70.9], [-116.1, 71.3], [-119.4, 71.6], [-117.9, 72.7], [-114.2, 73.1]], [[49.1, 41.3], [50.4, 40.3], [49.6, 40.2], [48.9, 38.8], [49.2, 37.6], [50.8, 36.9], [53.8, 37], [53.9, 39], [52.7, 40], [52.9, 40.9], [54.7, 41], [53.7, 42.1], [52.8, 41.1], [52.5, 42.8], [51.3, 43.1], [50.3, 44.6], [53, 45.3], [53, 46.9], [49.1, 46.4], [46.7, 44.6], [49.1, 41.3]], [[125.2, 1.4], [123.7, 0.2], [120.2, 0.2], [120.9, -1.4], [123.3, -0.6], [121.5, -1.9], [123.2, -5.3], [122.2, -5.3], [122.7, -4.5], [121.5, -4.6], [121, -2.6], [120.3, -2.9], [120.4, -5.5], [119.4, -5.4], [119.5, -3.5], [118.8, -2.8], [120, 0.6], [120.9, 1.3], [122.9, 0.9], [125.2, 1.4]], [[141, 37.1], [140.3, 35.1], [137.2, 34.6], [135.8, 33.5], [135.1, 34.6], [131, 33.9], [132, 33.1], [131.3, 31.5], [130.2, 31.4], [130.4, 32.3], [129.4, 33.3], [132.6, 35.4], [135.7, 35.5], [136.7, 37.3], [137.4, 36.8], [139.4, 38.2], [139.9, 40.6], [141.4, 41.4], [141.9, 39.2], [141, 37.1]], [[-56.1, 50.7], [-56.8, 49.8], [-53.5, 49.2], [-53.8, 48.5], [-53.1, 48.7], [-52.6, 47.5], [-53.1, 46.7], [-54.2, 46.8], [-54.2, 47.8], [-55.4, 46.9], [-56, 46.9], [-55.3, 47.4], [-56.3, 47.6], [-59.3, 47.6], [-59.2, 48.5], [-57.4, 50.7], [-55.4, 51.6], [-56.1, 50.7]], [[121.3, 18.5], [122.2, 18.5], [122.5, 17.1], [121.7, 15.9], [121.7, 14.3], [124, 13.8], [124.1, 12.5], [122.9, 13.6], [120.6, 13.9], [121, 14.5], [120.1, 15], [119.9, 16.4], [120.3, 16], [120.7, 18.5], [121.3, 18.5]], [[117.9, 1.8], [119, 0.9], [117.8, 0.8], [116.1, -4], [110.2, -2.9], [109.1, -0.5], [109.7, 2], [111.2, 1.9], [111.4, 2.7], [113, 3.1], [116.7, 6.9], [119.2, 5.4], [117.3, 3.2], [117.9, 1.8]], [[126.4, 8.4], [126.5, 7.2], [126.2, 6.3], [125.8, 7.3], [125.4, 6.8], [125.4, 5.6], [124.2, 6.2], [123.6, 7.8], [121.9, 7.2], [123.5, 8.7], [123.8, 8.2], [125.5, 9], [125.4, 9.8], [126.4, 8.4]], [[143.6, 50.7], [144.7, 49], [143.2, 49.3], [142.6, 47.9], [143.5, 46.1], [142.7, 46.7], [142.1, 46], [142.2, 51], [141.6, 51.9], [141.7, 53.3], [142.6, 53.8], [142.2, 54.2], [142.7, 54.4], [143.6, 50.7]], [[174.6, -36.2], [176.8, -37.9], [178.5, -37.7], [178, -39.2], [177.2, -39.1], [175.2, -41.7], [174.7, -41.3], [174.9, -39.9], [173.8, -39.5], [174.7, -37.4], [172.6, -34.5], [174.3, -35.3], [174.6, -36.2]], [[50.1, -13.6], [50.4, -15.7], [49.7, -15.7], [47.1, -24.9], [45.4, -25.6], [44, -25], [43.3, -22.1], [44.4, -20.1], [44, -17.4], [44.4, -16.2], [47.7, -14.6], [49.2, -12], [50.1, -13.6]], [[-175, 66.6], [-171.9, 66.9], [-169.9, 66], [-172.5, 65.4], [-173, 64.3], [-178.4, 65.4], [-178.7, 66.1], [-179.9, 65.9], [-179.4, 65.4], [-180, 65], [-180, 69], [-174.9, 67.2], [-175, 66.6]], [[57.5, 70.7], [53.7, 70.8], [51.5, 72], [54.4, 73.6], [53.5, 73.7], [55.9, 74.6], [55.6, 75.1], [61.2, 76.3], [68.9, 76.5], [58.5, 74.3], [55.4, 72.4], [55.6, 71.5], [57.5, 70.7]], [[173, -40.9], [174.2, -41.3], [172.7, -43.4], [173.1, -43.9], [171.5, -44.2], [170.6, -45.9], [169.3, -46.6], [166.7, -46.2], [167, -45.1], [170.5, -43], [172.1, -41], [173, -40.9]], [[143.9, 44.2], [145.3, 44.4], [145.5, 43.3], [144.1, 43], [143.2, 42], [141.6, 42.7], [141.1, 41.6], [140, 41.6], [139.8, 42.6], [141.4, 43.4], [142, 45.6], [143.9, 44.2]], [[-14.5, 66.5], [-14.7, 65.8], [-13.6, 65.1], [-18.7, 63.5], [-22.8, 64], [-21.8, 64.4], [-24, 64.9], [-22.2, 65.4], [-24.3, 65.6], [-22.1, 66.4], [-20.6, 65.7], [-14.5, 66.5]], [[105.8, -5.9], [104.7, -5.9], [102.6, -4.2], [95.3, 5.5], [97.5, 5.2], [100.6, 2.1], [101.7, 2.1], [103.8, 0.1], [103.4, -0.7], [106.1, -3.1], [105.8, -5.9]], [[-108.2, 76.2], [-105.7, 75.5], [-112.2, 74.4], [-113.9, 74.7], [-111.8, 75.2], [-117.7, 75.2], [-115.4, 76.5], [-109.1, 75.5], [-110.5, 76.4], [-109.6, 76.8], [-108.2, 76.2]], [[-87, 79.7], [-85.8, 79.3], [-90.8, 78.2], [-92.9, 78.3], [-94, 78.8], [-93.1, 79.4], [-96.7, 80.2], [-94.3, 81], [-94.7, 81.2], [-92.4, 81.3], [-87, 79.7]], [[-79.7, 22.8], [-74.2, 20.3], [-77.8, 19.9], [-77.1, 20.4], [-78.7, 21.6], [-82.2, 22.4], [-81.8, 22.6], [-85, 21.9], [-82.3, 23.2], [-79.7, 22.8]], [[-100.4, 73.8], [-97.4, 73.8], [-98.1, 73], [-96.5, 72.6], [-96.7, 71.7], [-99.3, 71.4], [-102.5, 72.5], [-100.4, 72.7], [-101.5, 73.4], [-100.4, 73.8]], [[-94.7, 77.1], [-91.6, 76.8], [-89.2, 75.6], [-81.1, 75.7], [-79.8, 74.9], [-89.8, 74.5], [-92.4, 74.8], [-93.9, 76.3], [-97.1, 76.8], [-94.7, 77.1]], [[-68.5, -71], [-68.8, -72.2], [-71.1, -72.5], [-74.2, -72.4], [-75, -71.7], [-72.1, -71.2], [-71.7, -69.5], [-70.3, -68.9], [-68.5, -71]], [[-72.6, 19.9], [-70, 19.6], [-68.3, 18.6], [-70.7, 18.4], [-71.4, 17.6], [-74.5, 18.3], [-72.3, 18.7], [-73.4, 19.6], [-72.6, 19.9]], [[-85.2, 65.7], [-80.1, 63.7], [-83.1, 64.1], [-85.5, 63.1], [-85.9, 63.6], [-87.2, 63.5], [-86.4, 64], [-85.9, 65.7], [-85.2, 65.7]], [[-120.5, 71.4], [-123.1, 70.9], [-125.9, 71.9], [-123.9, 73.7], [-124.9, 74.3], [-117.6, 74.2], [-115.5, 73.5], [-119.2, 72.5], [-120.5, 71.4]], [[18.3, 79.7], [21.5, 79], [19, 78.6], [17.1, 76.8], [15.9, 76.8], [13.8, 77.4], [14.7, 77.7], [10.4, 79.7], [18.3, 79.7]], [[152, -5.5], [150.2, -6.3], [148.3, -5.7], [150.1, -5], [150.8, -5.5], [151.5, -4.2], [152.3, -4.3], [152, -5.5]], [[-45.2, -78], [-43.9, -78.5], [-43.3, -80], [-50.5, -81], [-54.2, -80.6], [-48.7, -78], [-45.2, -78]], [[-67.8, -53.9], [-65, -54.7], [-69.2, -55.5], [-74.7, -52.8], [-71.1, -54.1], [-69.3, -52.5], [-67.8, -53.9]], [[108.6, -6.8], [110.8, -6.5], [115.7, -8.4], [114.6, -8.8], [105.4, -6.9], [106.1, -5.9], [108.6, -6.8]], [[-6.8, 52.3], [-10, 51.8], [-9.2, 52.9], [-9.7, 53.9], [-6.7, 55.2], [-5.7, 54.6], [-6.8, 52.3]], [[145.4, -40.8], [148.3, -40.9], [147.9, -43.2], [146, -43.5], [144.7, -41.2], [145.4, -40.8]], [[81.2, 6.2], [80.3, 6], [79.9, 6.8], [80.1, 9.8], [81.8, 7.5], [81.2, 6.2]], [[125.5, 12.2], [125.8, 11], [125, 11.3], [124.8, 10.1], [124.3, 12.6], [125.5, 12.2]], [[121.2, 22.8], [120.7, 22], [120.1, 23.6], [121.5, 25.3], [122, 25], [121.2, 22.8]], [[-123.5, 48.5], [-125.7, 48.8], [-128.1, 50], [-128.4, 50.8], [-125.8, 50.3], [-123.5, 48.5]], [[-93.2, 72.8], [-95.4, 72.1], [-96, 73.4], [-94.5, 74.1], [-90.5, 73.9], [-93.2, 72.8]], [[145.1, 75.6], [144.3, 74.8], [139, 74.6], [137, 75.3], [138.8, 76.1], [145.1, 75.6]], [[-98.5, 76.7], [-97.7, 76.3], [-98.2, 75], [-102.5, 75.6], [-102.6, 76.3], [-98.5, 76.7]], [[24.7, 77.9], [20.7, 77.7], [21.4, 77.9], [20.8, 78.3], [22.9, 78.5], [24.7, 77.9]], [[-100.1, 78.3], [-99.7, 77.9], [-105.2, 78.4], [-104.2, 78.7], [-105.5, 79.3], [-100.1, 78.3]], [[99.9, 78.9], [95, 79], [91.2, 80.3], [95.9, 81.3], [100.2, 79.8], [99.9, 78.9]], [[-159.2, -79.5], [-161.1, -79.6], [-163.7, -78.6], [-161.2, -78.4], [-159.2, -79.5]], [[-121.2, -73.5], [-118.7, -73.5], [-120.2, -74.1], [-122.6, -73.7], [-121.2, -73.5]], [[124.4, -10.1], [123.5, -10.2], [125.1, -8.7], [127.3, -8.4], [124.4, -10.1]], [[130.5, -3.1], [130.8, -3.9], [127.9, -3.4], [128.1, -2.8], [130.5, -3.1]], [[128.7, 1.1], [128.1, -0.9], [127.4, 1], [127.9, 2.2], [128.7, 1.1]], [[118.5, 9.3], [117.2, 8.4], [119.5, 11.4], [119.7, 10.6], [118.5, 9.3]], [[134.6, 34.1], [134.2, 33.2], [132.4, 33], [132.9, 34.1], [134.6, 34.1]], [[15.5, 38.2], [15.1, 36.6], [12.4, 37.6], [12.6, 38.1], [15.5, 38.2]], [[-153, 57.1], [-154, 56.7], [-154.7, 57.5], [-152.1, 57.6], [-153, 57.1]], [[-178.7, 70.9], [-180, 70.8], [-180, 71.5], [-177.6, 71.3], [-178.7, 70.9]], [[-76.3, 73.1], [-79.5, 72.7], [-80.9, 73.3], [-78.1, 73.7], [-76.3, 73.1]], [[-116.2, 77.6], [-117.1, 76.5], [-122.9, 76.1], [-119.1, 77.5], [-116.2, 77.6]], [[-95.8, 78.1], [-98.1, 78.1], [-98.6, 78.9], [-95.6, 78.4], [-95.8, 78.1]], [[105.1, 78.3], [99.4, 77.9], [102.1, 79.3], [105.4, 78.7], [105.1, 78.3]], [[25.4, 80.4], [27.4, 80.1], [23, 79.4], [17.4, 80.3], [25.4, 80.4]], [[-59.6, -80], [-60.2, -81], [-66.3, -80.3], [-59.6, -80]], [[-125.6, -73.5], [-124, -73.9], [-127.3, -73.5], [-125.6, -73.5]], [[-99, -71.9], [-96.2, -72.5], [-102.3, -71.9], [-99, -71.9]], [[-58.5, -51.1], [-58, -51.9], [-61.2, -51.9], [-58.5, -51.1]], [[167.1, -22.2], [165.5, -21.7], [164, -20.1], [167.1, -22.2]], [[122.9, -8.1], [122.8, -8.6], [119.9, -8.8], [122.9, -8.1]], [[153.1, -4.5], [150.7, -2.7], [152.2, -3.2], [153.1, -4.5]], [[23.7, 35.7], [26.3, 35.3], [24.7, 34.9], [23.7, 35.7]], [[-95.6, 69.1], [-99.8, 69.4], [-98.2, 70.1], [-95.6, 69.1]], [[-104.5, 73.4], [-105.4, 72.8], [-106.9, 73.5], [-104.5, 73.4]], [[143.6, 73.2], [139.9, 73.4], [142.1, 73.9], [143.6, 73.2]], [[-93.6, 75], [-96.8, 74.9], [-94.9, 75.6], [-93.6, 75]], [[51.1, 80.5], [47.6, 80], [44.8, 80.6], [51.1, 80.5]]];
+LAND.forEach(function(ring) {
+  const shape = new THREE.Shape(ring.map(p => new THREE.Vector2(p[0]*DEG,p[1]*DEG)));
+  const land = new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshBasicMaterial({
+    color:new THREE.Color(0x193344).convertSRGBToLinear(),side:THREE.DoubleSide,toneMapped:false}));
+  land.rotation.x=-Math.PI/2;
+  land.position.y=0.01;
+  scene.add(land);
+  const points = ring.map(p => project(p[0], p[1], 0.03));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.LineBasicMaterial({color: 0x73949f,transparent:true,opacity:0.3})));
+});
+
+// ---------------------------------------------------------------- helpers
+
+function hex(c) { return new THREE.Color(c).convertSRGBToLinear(); }
+
+function labelSprite(text, color, size, weight) {
+  // A bare family name, deliberately. The CSS font shorthand rejects an
+  // unquoted multi-word family, and a rejected `ctx.font` silently leaves the
+  // default 10px -- which draws readable-looking text into the corner of a
+  // 64px canvas and scales it to a smear.
+  const pad = 8, font = (weight || 600) + ' 42px sans-serif';
+  const meas = document.createElement('canvas').getContext('2d');
+  meas.font = font;
+  const w = Math.ceil(meas.measureText(text).width) + pad * 2;
+  const h = 64;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.font = font;
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  ctx.fillText(text, pad, h / 2);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  // fog off: the scene is fogged for depth, and a label that fades out at the
+  // far stations is a label that cannot be read when it matters.
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: tex, transparent: true, depthWrite: false, fog: false }));
+  const s = size || 0.5;
+  sp.scale.set((w / h) * s, s, 1);
+  return sp;
+}
+
+const labelPool = [];
+function addLabel(parent, text, color, size, pos, weight) {
+  const sp = labelSprite(text, color, size, weight);
+  sp.position.copy(pos);
+  parent.add(sp);
+  labelPool.push(sp);
+  return sp;
+}
+
+// Screen-space names stay crisp; finer annotations appear on hover or zoom.
+const screenLabels=[];
+const labelPosition=new THREE.Vector3();
+function siteLabel(parent,position,title,subtitle,color,deviceKey) {
+  const el=document.createElement('div');
+  el.className='site-label';
+  el.style.setProperty('--site-color',color);
+  const heading=document.createElement('strong');
+  const dot=document.createElement('span'); dot.className='site-dot';
+  heading.append(dot,document.createTextNode(title));
+  const sub=document.createElement('small'); sub.textContent=subtitle;
+  el.append(heading,sub);
+  document.getElementById('labels').appendChild(el);
+  screenLabels.push({parent,position,el,deviceKey});
+}
+function updateLabels() {
+  screenLabels.forEach(label=>{
+    labelPosition.copy(label.position);
+    label.parent.localToWorld(labelPosition);
+    labelPosition.project(camera);
+    const visible=labelsOn && labelPosition.z>-1 && labelPosition.z<1 && Math.abs(labelPosition.x)<1 && Math.abs(labelPosition.y)<1;
+    label.el.style.display=visible?'block':'none';
+    if(visible) {
+      label.el.style.left=(labelPosition.x+1)*stage.clientWidth/2+'px';
+      label.el.style.top=(1-labelPosition.y)*stage.clientHeight/2+'px';
+      label.el.classList.toggle('sending',label.deviceKey?sending.has(label.deviceKey):sending.size>0);
+    }
+  });
+  labelPool.forEach(label=>{
+    label.getWorldPosition(labelPosition);
+    label.visible=labelsOn && (camera.position.distanceTo(labelPosition)<32 ||
+      (hovered!==null && label.userData.device===hovered));
+  });
+}
+
+// Exact digital-twin D profile (generate_3d_models.py), normalised by R.
+function coilProfile(d, R) {
+  const a = R * d.epsilon;
+  const rCS = Math.max(0.14 / d.R * R, (R - a) * 0.45);
+  const inner = Math.max(rCS * 1.15, (R - a) * 0.55);
+  const outer = (R + a * 1.05) * 1.08;
+  const top = a * d.kappa * 1.12;
+  const v = (x,y) => new THREE.Vector3(x,y,0);
+  const curve = new THREE.CurvePath();
+  curve.add(new THREE.LineCurve3(v(inner,-top),v(inner,top)));
+  curve.add(new THREE.QuadraticBezierCurve3(v(inner,top),v(R*0.9,top*1.06),v(outer*0.94,top*0.65)));
+  curve.add(new THREE.QuadraticBezierCurve3(v(outer*0.94,top*0.65),v(outer,0),v(outer*0.94,-top*0.65)));
+  curve.add(new THREE.QuadraticBezierCurve3(v(outer*0.94,-top*0.65),v(R*0.9,-top*1.06),v(inner,-top)));
+  return {curve, outer, top, rCS, a};
+}
+
+function lineBetween(a, b, color, opacity) {
+  const geo = new THREE.BufferGeometry().setFromPoints([a, b]);
+  return new THREE.Line(geo, new THREE.LineBasicMaterial({
+    color: hex(color), transparent: true, opacity: opacity }));
+}
+
+// ------------------------------------------------------------------- hub
+
+const hub = new THREE.Group();
+hub.position.copy(project(DATA.server.lon, DATA.server.lat, 10));
+scene.add(hub);
+scene.add(lineBetween(project(DATA.server.lon, DATA.server.lat),hub.position,'#52766c',0.6));
+
+const hubRings = {};
+DATA.clusters.forEach(function (c) {
+  const y = DECK[c.key];
+  const g = new THREE.Group();
+  g.position.y = y;
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(HUB_R, 0.085, 12, 120),
+    new THREE.MeshStandardMaterial({
+      color: hex(c.color), emissive: hex(c.color), emissiveIntensity: 0.75,
+      metalness: 0.6, roughness: 0.28, transparent: true, opacity: 0.95 }));
+  ring.rotation.x = Math.PI / 2;
+  g.add(ring);
+
+  const inner = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.62, 0),
+    new THREE.MeshStandardMaterial({
+      color: hex(c.color), emissive: hex(c.color),
+      emissiveIntensity: c.aggregated ? 0.95 : 0.15,
+      metalness: 0.5, roughness: 0.4,
+      transparent: true, opacity: c.aggregated ? 0.92 : 0.35,
+      wireframe: !c.aggregated }));
+  g.add(inner);
+  g.userData.inner = inner;
+
+  const disc = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, HUB_R - 0.12, 64),
+    new THREE.MeshBasicMaterial({
+      color: hex(c.color), transparent: true, opacity: 0.055,
+      side: THREE.DoubleSide }));
+  disc.rotation.x = -Math.PI / 2;
+  g.add(disc);
+
+  addLabel(g, c.label.toUpperCase() + ' CHANNEL', c.color, 0.46,
+           new THREE.Vector3(0, 0.95, 0), 700);
+  addLabel(g, c.payloadBytes + ' B payload', '#7d8590', 0.36,
+           new THREE.Vector3(0, 0.52, 0), 500);
+
+
+  hub.add(g);
+  hubRings[c.key] = g;
+});
+
+// Short neutral stubs at each ring, NOT a column through all three. Thermal
+// never aggregates with particle or current, so nothing in the scene may join
+// the hubs -- a spine would draw exactly the coupling role matching forbids,
+// and it would be the first thing a viewer read off the picture.
+DATA.clusters.forEach(function (c) {
+  const stub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.035, 1.1, 8),
+    new THREE.MeshBasicMaterial({ color: 0x30363d, transparent: true, opacity: 0.5 }));
+  stub.position.y = DECK[c.key];
+  hub.add(stub);
+});
+siteLabel(hub,new THREE.Vector3(0,5.4,0),'Federation hub','Greenland · schematic site','#9cdded',null);
+
+// --------------------------------------------------------------- devices
+
+const deviceGroups = [];
+const links = [];
+const pickTargets = [];
+const linkGroup = new THREE.Group();
+scene.add(linkGroup);
+let dynamicLabels = [];
+
+DATA.devices.forEach(function(d) {
+  const g = new THREE.Group();
+  g.position.copy(project(d.lon + d.offsetLon, d.lat + d.offsetLat, BASE_Y));
+  g.userData.device = d;
+  scene.add(g);
+  deviceGroups.push(g);
+  const R = COIL_R * d.scale;
+  const profile = coilProfile(d, R);
+  const coilGeo = new THREE.TubeGeometry(profile.curve,64,Math.max(0.028 / d.R * R,profile.a*0.07),8,true);
+  // Sixteen TF coils, as in the digital twin. Colors are a logical overlay.
+  for(let k=0;k<16;k++) {
+    const c = d.coils[k % d.coils.length];
+    const mesh = new THREE.Mesh(coilGeo,new THREE.MeshStandardMaterial({
+      color:hex(c.color).lerp(hex('#b0bdcd'),0.45),
+      emissive:hex(c.color),emissiveIntensity:0.08,metalness:0.45,roughness:0.26}));
+    mesh.rotation.y = k / 16 * Math.PI * 2;
+    g.add(mesh);
+  }
+  const plasma = new THREE.Mesh(new THREE.TorusGeometry(R,profile.a,32,96),
+    new THREE.MeshPhongMaterial({color:hex(d.color),emissive:hex(d.color),emissiveIntensity:0.35,
+      shininess:90,transparent:true,opacity:0.2,depthWrite:false}));
+  plasma.rotation.x = Math.PI/2;
+  plasma.scale.z = d.kappa;
+  g.add(plasma);
+  g.userData.plasma = plasma;
+  const solenoid = new THREE.Mesh(new THREE.CylinderGeometry(profile.rCS,profile.rCS,profile.top*2.1,24),
+    new THREE.MeshStandardMaterial({color:hex('#586e81'),metalness:0.55,roughness:0.3}));
+  g.add(solenoid);
+  for(let winding=0;winding<7;winding++) {
+    const band=new THREE.Mesh(new THREE.TorusGeometry(profile.rCS*1.015,0.025,6,36),
+      new THREE.MeshStandardMaterial({color:0x98b5c5,metalness:0.55,roughness:0.3}));
+    band.rotation.x=Math.PI/2; band.position.y=(winding/6-0.5)*profile.top*1.85; g.add(band);
+  }
+  d.coils.forEach(function(c, ci) {
+    const outboard = profile.curve.getPoints(200).filter(p => p.x > R);
+    c.agents.forEach(function(a,i) {
+      const angle = (ci + i*3) / 16 * Math.PI*2;
+      const p = outboard[Math.floor(outboard.length/2)].clone();
+      p.applyAxisAngle(new THREE.Vector3(0,1,0),angle);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.4),
+        new THREE.MeshStandardMaterial({color:a.available?hex(c.color):0x60666d,wireframe:!a.available}));
+      box.position.copy(p); box.rotation.y = angle;
+      g.add(box);
+      g.add(lineBetween(p,new THREE.Vector3(),c.color,0.14));
+      const agentLabel=addLabel(g,a.name+(a.available?'':' (off)'),c.color,0.36,p.clone().multiplyScalar(1.2).add(new THREE.Vector3(0,0.4,0)));
+      agentLabel.userData.device=d.key;
+    });
+  });
+  const pin = project(d.lon,d.lat,0.1);
+  const marker = new THREE.Mesh(new THREE.SphereGeometry(0.22,12,8),new THREE.MeshBasicMaterial({color:hex(d.color)}));
+  marker.position.copy(pin); scene.add(marker);
+  scene.add(lineBetween(pin,g.position,d.color,0.32));
+  const footprint=new THREE.Mesh(new THREE.RingGeometry(0.42,0.5,48),
+    new THREE.MeshBasicMaterial({color:hex(d.color),transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+  footprint.rotation.x=-Math.PI/2; footprint.position.copy(pin); scene.add(footprint);
+  siteLabel(g,new THREE.Vector3(0,profile.top+1.4,0),d.label,
+    d.place+(d.isTarget?' · recipient':''),d.color,d.key);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(profile.outer*1.15,0.035,8,96),
+    new THREE.MeshBasicMaterial({color:hex(d.color),transparent:true,opacity:0.2}));
+  ring.rotation.x = Math.PI/2; ring.position.y = -profile.top-0.4; g.add(ring);
+  g.userData.sendRing = ring;
+  const plinth=new THREE.Mesh(new THREE.CylinderGeometry(profile.outer*1.1,profile.outer*1.13,0.12,64),
+    new THREE.MeshStandardMaterial({color:hex('#102638'),metalness:0.35,roughness:0.55,transparent:true,opacity:0.8}));
+  plinth.position.y=ring.position.y-0.1; g.add(plinth);
+  const pick = new THREE.Mesh(new THREE.CylinderGeometry(profile.outer*1.1,profile.outer*1.1,profile.top*2.4,16),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+  pick.userData.device=d; g.add(pick); pickTargets.push(pick);
+});
+
+// Soft additive sprites give each moving bunch a bright core and a fading halo.
+const particleCanvas = document.createElement('canvas');
+particleCanvas.width = particleCanvas.height = 64;
+const particleContext = particleCanvas.getContext('2d');
+const particleGradient = particleContext.createRadialGradient(32,32,0,32,32,32);
+particleGradient.addColorStop(0,'rgba(255,255,255,1)');
+particleGradient.addColorStop(0.16,'rgba(255,255,255,0.95)');
+particleGradient.addColorStop(0.4,'rgba(255,255,255,0.25)');
+particleGradient.addColorStop(1,'rgba(255,255,255,0)');
+particleContext.fillStyle=particleGradient;
+particleContext.fillRect(0,0,64,64);
+const particleTexture=new THREE.CanvasTexture(particleCanvas);
+const streamPoint=new THREE.Vector3();
+const streamTangent=new THREE.Vector3();
+const streamSide=new THREE.Vector3();
+const streamUp=new THREE.Vector3();
+const vertical=new THREE.Vector3(0,1,0);
+
+function updateStream(stream,dt) {
+  stream.phase=(stream.phase+stream.speed*dt)%1;
+  const positions=stream.cloud.geometry.attributes.position;
+  for(let bunch=0;bunch<stream.bunches;bunch++) {
+    for(let tail=0;tail<stream.tailSize;tail++) {
+      const travel=(stream.phase+bunch/stream.bunches-tail*0.0017+1)%1;
+      const u=stream.dir>0?travel:1-travel;
+      stream.curve.getPoint(u,streamPoint);
+      stream.curve.getTangent(u,streamTangent);
+      streamSide.crossVectors(streamTangent,vertical).normalize();
+      streamUp.crossVectors(streamSide,streamTangent).normalize();
+      const twist=tail*0.65+bunch*2.4+stream.phase*50;
+      const spread=0.018+0.075*tail/stream.tailSize;
+      streamPoint.addScaledVector(streamSide,Math.cos(twist)*spread);
+      streamPoint.addScaledVector(streamUp,Math.sin(twist)*spread);
+      positions.setXYZ(bunch*stream.tailSize+tail,streamPoint.x,streamPoint.y,streamPoint.z);
+    }
+  }
+  positions.needsUpdate=true;
+}
+
+function rebuildLinks() {
+  // Dispose old GPU resources on every click; the stationary scene stays intact.
+  linkGroup.traverse(o => {
+    if(o.geometry) o.geometry.dispose();
+    if(o.material) { if(o.material.map && o.material.map!==particleTexture) o.material.map.dispose(); o.material.dispose(); }
+  });
+  linkGroup.clear(); links.length=0;
+  dynamicLabels.forEach(l => {const i=labelPool.indexOf(l); if(i>=0) labelPool.splice(i,1);});
+  dynamicLabels=[];
+  const mask=DATA.deviceOrder.map(k => sending.has(k)?'1':'0').join('');
+  const state=DATA.participation[mask];
+  if(!state) throw new Error('Missing participation state '+mask);
+  DATA.clusters.forEach(c => {
+    const active=state.clusters[c.key].aggregated;
+    const mat=hubRings[c.key].userData.inner.material;
+    mat.wireframe=!active; mat.opacity=active?0.92:0.25;
+    mat.emissiveIntensity=active?0.95:0.15;
+  });
+  function packets(curve,color,weight,dir) {
+    const bunches=dir<0?9:Math.max(5,Math.round(7+22*weight));
+    const tailSize=26, count=bunches*tailSize;
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(count*3),3).setUsage(THREE.DynamicDrawUsage));
+    const colors=new Float32Array(count*3);
+    const tint=hex(color);
+    for(let i=0;i<count;i++) {
+      const tail=i%tailSize;
+      const fade=Math.pow(1-tail/tailSize,1.7);
+      const head=tail<3?0.6:0;
+      colors[i*3]=(tint.r*(1-head)+head)*fade;
+      colors[i*3+1]=(tint.g*(1-head)+head)*fade;
+      colors[i*3+2]=(tint.b*(1-head)+head)*fade;
+    }
+    geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+    const cloud=new THREE.Points(geometry,new THREE.PointsMaterial({
+      map:particleTexture,size:dir<0?0.48:0.58,vertexColors:true,
+      transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.95}));
+    cloud.frustumCulled=false;
+    cloud.visible=flowOn;
+    linkGroup.add(cloud);
+    const stream={curve,cloud,bunches,tailSize,phase:dir<0?0.5:0,speed:0.09+0.18*weight,dir};
+    updateStream(stream,0);
+    links.push(stream);
+  }
+  deviceGroups.forEach(g => {
+    const d=g.userData.device;
+    g.userData.sendRing.material.opacity=sending.has(d.key)?0.8:0.18;
+    d.coils.forEach(c => {
+      Object.assign(c,state.devices[d.key][c.cluster]);
+      const start=g.position.clone(); start.y += DECK[c.cluster]*0.35;
+      const end=hub.position.clone(); end.y += DECK[c.cluster];
+      const mid=start.clone().lerp(end,0.5); mid.y+=6;
+      const curve=new THREE.QuadraticBezierCurve3(start,mid,end);
+      if(!c.excluded) {
+        const w=c.weight;
+        if(c.admissible) {
+          // A faint beam envelope replaces the solid cable; moving particles dominate.
+          linkGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve,64,0.06+0.07*w,6,false),
+            new THREE.MeshBasicMaterial({color:hex(c.color),transparent:true,opacity:0.045+0.05*w,
+              blending:THREE.AdditiveBlending,depthWrite:false})));
+          if(w>0) packets(curve,c.color,w,1);
+        } else {
+          const pts=curve.getPoints(48), segments=[];
+          for(let i=0;i<48;i+=2) if(i<20||i>28) segments.push(pts[i],pts[i+1]);
+          linkGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(segments),
+            new THREE.LineBasicMaterial({color:0x7d8590})));
+        }
+        const label=addLabel(linkGroup,c.admissible?(w*100).toFixed(1)+'%':'refused',
+          c.admissible?c.color:'#f85149',0.42,curve.getPoint(0.4));
+        label.userData.device=d.key;
+        label.visible=labelsOn; dynamicLabels.push(label);
+      }
+      // The target may receive even when it is silent or its own update is refused.
+      if(d.isTarget && state.clusters[c.cluster].aggregated) packets(curve,'#ffffff',0.8,-1);
+    });
+  });
+  document.getElementById('send-status').textContent=sending.size+' / '+DATA.devices.length+' machines sending';
+  document.getElementById('channel-status').innerHTML=DATA.clusters.map(c => {
+    const diag=state.clusters[c.key];
+    return c.label+': '+(diag.aggregated?diag.effectivePeers.toFixed(2)+' effective peers':'no aggregate');
+  }).join('<br>');
+  if(hovered) renderTip(DATA.devices.find(d=>d.key===hovered));
+}
+
+// --------------------------------------------------------------- overlays
+
+(function buildLegend() {
+  const host = document.getElementById('legend-rows');
+  DATA.clusters.forEach(function (c) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<span class="swatch" style="background:' + c.color + ';color:' + c.color +
+      '"></span><span>' + c.label + '<small>' + c.payloadBytes + ' B / update</small></span>';
+    host.appendChild(row);
+  });
+})();
+
+(function buildStatus() {
+  const d = DATA.devices.filter(function (x) { return x.isTarget; })[0];
+  document.getElementById('status-target').textContent = d ? d.label : DATA.target;
+  document.getElementById('status-sub').innerHTML =
+    'kernel bandwidth <b>' + DATA.bandwidth.toFixed(3) + '</b><br>' +
+    'rule <b>' + DATA.rule + '</b> &middot; round <b>' + DATA.round + '</b><br>' +
+    (DATA.useSimilarity ? 'similarity-weighted' : 'uniform (baseline 2)');
+})();
+
+let flowOn = true, labelsOn = true;
+const btnFlow = document.getElementById('btn-flow');
+const btnSpin = document.getElementById('btn-spin');
+const btnLabels = document.getElementById('btn-labels');
+
+btnFlow.onclick = function () {
+  flowOn = !flowOn;
+  btnFlow.textContent = 'Animation: ' + (flowOn ? 'on' : 'off');
+  btnFlow.classList.toggle('off', !flowOn);
+  links.forEach(function (l) {
+    l.cloud.visible = flowOn;
+  });
+};
+btnSpin.onclick = function () {
+  controls.autoRotate = !controls.autoRotate;
+  btnSpin.textContent = 'Orbit: ' + (controls.autoRotate ? 'on' : 'off');
+  btnSpin.classList.toggle('off', !controls.autoRotate);
+};
+btnSpin.classList.add('off');
+btnLabels.onclick = function () {
+  labelsOn = !labelsOn;
+  btnLabels.textContent = 'Labels: ' + (labelsOn ? 'on' : 'off');
+  btnLabels.classList.toggle('off', !labelsOn);
+  labelPool.forEach(function (s) { s.visible = labelsOn; });
+};
+document.getElementById('btn-reset').onclick = function () {
+  resetCamera();
+};
+
+// ------------------------------------------------------------------ hover
+
+const ray = new THREE.Raycaster();
+const ptr = new THREE.Vector2();
+let hovered = null;
+let press = null;
+const activePointers = new Set();
+renderer.domElement.addEventListener('pointerdown', function(e) {
+  activePointers.add(e.pointerId);
+  press=activePointers.size===1 && e.button===0?{id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),moved:false}:null;
+});
+renderer.domElement.addEventListener('pointermove', function(e) {
+  if(press && Math.hypot(e.clientX-press.x,e.clientY-press.y)>5) press.moved=true;
+});
+renderer.domElement.addEventListener('pointercancel', function(e) {activePointers.delete(e.pointerId);press=null;});
+renderer.domElement.addEventListener('pointerup', function(e) {
+  activePointers.delete(e.pointerId);
+  const p=press; press=null;
+  if(!p || p.id!==e.pointerId || p.moved || performance.now()-p.time>600) return;
+  const r=renderer.domElement.getBoundingClientRect();
+  ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(ptr,camera);
+  const hits=ray.intersectObjects(pickTargets,false);
+  if(!hits.length) return;
+  const key=hits[0].object.userData.device.key;
+  if(sending.has(key)) sending.delete(key); else sending.add(key);
+  rebuildLinks();
+});
+
+renderer.domElement.addEventListener('pointermove', function (e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(pickTargets, false);
+  if (hit.length) {
+    const d = hit[0].object.userData.device;
+    if (hovered !== d.key) { hovered = d.key; renderTip(d); }
+    tip.style.display = 'block';
+    tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 290) + 'px';
+    tip.style.top = Math.min(e.clientY + 14, window.innerHeight - 220) + 'px';
+  } else {
+    hovered = null;
+    tip.style.display = 'none';
+  }
+});
+renderer.domElement.addEventListener('pointerleave', function () {
+  hovered = null; tip.style.display = 'none';
+});
+
+function renderTip(d) {
+  let rows = '';
+  rows += '<tr><td class="k">R / a / B0</td><td>' + d.R.toFixed(2) + ' m &middot; ' +
+          d.a.toFixed(2) + ' m &middot; ' + d.B0.toFixed(1) + ' T</td></tr>';
+  rows += '<tr><td class="k">Ip</td><td>' + d.Ip.toFixed(2) + ' MA</td></tr>';
+  rows += '<tr><td class="k">rho*</td><td>' + d.state.rho_star.toExponential(2) + '</td></tr>';
+  rows += '<tr><td class="k">nu*</td><td>' + d.state.nu_star.toFixed(3) + '</td></tr>';
+  rows += '<tr><td class="k">beta_N</td><td>' + d.state.beta_N.toFixed(2) + '</td></tr>';
+  rows += '<tr><td class="k">q95</td><td>' + d.state.q95.toFixed(2) + '</td></tr>';
+  rows += '<tr><td class="k">distance to target</td><td>' + d.distance.toFixed(3) + '</td></tr>';
+  if (d.roundAge) {
+    rows += '<tr><td class="k">update age</td><td>' + d.roundAge + ' rounds</td></tr>';
+  }
+  if (d.violationRate > 0) {
+    rows += '<tr><td class="k">violation rate</td><td>' +
+            (d.violationRate * 100).toFixed(0) + '%</td></tr>';
+  }
+  d.coils.forEach(function (c) {
+    let cell;
+    if (c.admissible) {
+      cell = (c.weight * 100).toFixed(1) + '%';
+    } else if (c.excluded) {
+      cell = '<span class="k">not buffered</span>';
+    } else {
+      cell = '<span style="color:#f85149">refused by gate</span>';
+    }
+    rows += '<tr><td class="k" style="color:' + c.color + '">' + c.label +
+            '</td><td>' + cell + '</td></tr>';
+  });
+  tip.innerHTML = '<h4 style="color:' + d.color + '">' + d.label + '</h4>' +
+                  '<div class="k">' + d.place + ' · ' + d.lat.toFixed(2) + ', ' + d.lon.toFixed(2) + '<br>' + (sending.has(d.key)?'Sending':'Silent') + '</div><table>' + rows + '</table>';
+}
+
+// ----------------------------------------------------------------- render
+
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  if (flowOn) {
+    links.forEach(function (l) { updateStream(l,dt); });
+  }
+
+  deviceGroups.forEach(function (g, i) {
+    // Breathing plasma, matching the per-device viewports' shader idea.
+    const pulse = Math.sin(t * 1.4 + i) * 0.13 + 0.87;
+    g.userData.plasma.material.opacity = 0.12 * pulse + 0.12;
+
+    if (g.userData.sel) { g.userData.sel.rotation.z += dt * 0.6; }
+  });
+
+  Object.keys(hubRings).forEach(function (k, i) {
+    const inner = hubRings[k].userData.inner;
+    inner.rotation.y += dt * (0.4 + 0.12 * i);
+    inner.rotation.x += dt * 0.22;
+  });
+
+  controls.update();
+  scene.updateMatrixWorld(true);
+  updateLabels();
+  renderer.render(scene, camera);
+}
+rebuildLinks();
+animate();
+
+window.addEventListener('resize', function () {
+  camera.aspect = stage.clientWidth / stage.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+});
+</script>
+</body>
+</html>

@@ -42,8 +42,15 @@ def post(base, path, data, origin=None):
 def test_frontend_and_live_tools(dashboard):
     _, base = dashboard
     with urlopen(base) as response:
-        assert b"Fusion Investigator" in response.read()
+        html = response.read()
+        assert b"Fusion Investigator" in html
+        assert b'class="application"' in html
+        assert b'class="slide"' not in html
+        assert b'/deck.js' not in html
         assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/deck.js")
+    assert error.value.code == 404
     with urlopen(base + "/api/evidence") as response:
         evidence = json.load(response)["diagnoses"]
     assert len(evidence) == 3

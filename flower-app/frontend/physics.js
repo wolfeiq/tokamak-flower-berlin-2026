@@ -95,7 +95,7 @@ async function init() {
   if (!root) return;
   let devices;
   try { devices = await (await fetch('/api/devices')).json(); }
-  catch { root.querySelector('.panel').textContent = 'Device parameters unavailable.'; return; }
+  catch { document.getElementById('physics-verdict').textContent = 'Device parameters unavailable. Reload to retry.'; return; }
   const $ = id => document.getElementById(id);
   const state = { site: 'A', power: 1.0, assumed: 1.6 };
   function render() {
@@ -110,9 +110,9 @@ async function init() {
     $('physics-chi').textContent = fmtChi(run.chiRef) + ' m²/s';
     $('physics-apparent').textContent = usable ? fmtChi(apparent) + ' m²/s' : 'unidentifiable';
     $('physics-verdict').textContent = !usable
-      ? 'Profile below the critical gradient: transport cannot be identified from it. This is facility C’s situation.'
+      ? 'This profile fails the demo’s gradient criterion for comparison. This is facility C’s situation.'
       : state.assumed > 1.25
-        ? `Assuming commanded power was delivered inflates χ by ×${state.assumed.toFixed(2)} — an apparent transport anomaly (ratio ${ratio.toFixed(2)}) with nothing wrong with the transport. This is facility A’s situation.`
+        ? `Assuming commanded power was delivered inflates χ by ×${state.assumed.toFixed(2)} — an apparent transport anomaly (ratio ${ratio.toFixed(2)}) in this synthetic model. Facility A still needs an independent power measurement.`
         : 'With the delivered power verified, the recovered χ sits near this device’s own reference — facility B after its source audit.';
     $('physics-device').textContent = `${dev.name} · B₀ ${dev.B_0} T · a ${dev.a_minor} m · R ${dev.R_major} m`;
     const twin = $('twin-frame');

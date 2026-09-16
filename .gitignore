@@ -6,6 +6,7 @@ __pycache__/
 results/**/*.npz
 results/**/*.nc
 .pytest_cache/
+pytest-cache-files-*/
 .ruff_cache/
 results/figures_demo/
 

@@ -8,6 +8,7 @@ dist/
 local*.json
 smoke-output/
 .dashboard/
+.dashboard-preview.*
 .fusion-state/
 # Optional private or generated profile arrays never belong in an agent bundle.
 fusion_agent/thermal/_fixtures.json

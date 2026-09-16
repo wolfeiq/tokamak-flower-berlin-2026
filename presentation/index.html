@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tokamak collaboration | Presentation</title>
+  <link rel="stylesheet" href="style.css"><script src="deck.js" defer></script>
+</head>
+<body class="deck">
+<div class="progress" id="deck-progress"></div>
+<header class="chrome top"><span>TOKAMAK COLLABORATION · PRESENTATION</span><a href="http://127.0.0.1:8787/#thermal" target="_blank" rel="noopener">Open research app ↗</a></header>
+<footer class="chrome bottom"><span id="deck-counter"></span><span>← → navigate · interact directly with the 3D views</span><nav><button id="deck-prev" aria-label="Previous slide">←</button><button id="deck-next" aria-label="Next slide">→</button></nav></footer>
+
+<section class="slide" id="opening"><div class="slide-inner title">
+  <div class="kicker">FLOWER × TORAX</div><h1>Collaboration across<br>tokamak facilities</h1>
+  <p class="lede">Sharing evidence for investigation.<br>Sharing learned policies for control research.</p>
+  <div class="block-list"><p><span>01</span> Flower LLM investigation agents</p><p><span>02</span> HFMARL and TORAX experiments</p></div>
+  <p class="note">Research prototype · synthetic investigation cases · simulation studies</p>
+</div></section>
+
+<section class="slide" id="problem"><div class="slide-inner">
+  <div class="kicker">01 · FLOWER LLM AGENTS</div><h2>Investigating a weak thermal response</h2>
+  <div class="split"><div class="prose"><p>The plasma is colder than expected.</p><p>Was less power delivered?<br>Did heat transport increase?<br>Is a measurement misleading?</p><p class="emphasis">Which independent measurement should come next?</p></div>
+  <figure><iframe data-src="visuals/diiid_like.html" title="Interactive DIII-D-like reactor assembly"></iframe><figcaption>Illustrative reactor geometry from the device registry. This assembly does not simulate plasma behaviour.</figcaption></figure></div>
+</div></section>
+
+<section class="slide" id="background"><div class="slide-inner">
+  <div class="kicker">RESEARCH BACKGROUND</div><h2>AI already operates in fusion experiments</h2>
+  <div class="research-rows"><article><span>Princeton-led · DIII-D</span><h3>Tearing-instability avoidance</h3><p>Reinforcement learning reduced tearing likelihood while maintaining high-performance operation.</p><a href="https://www.nature.com/articles/s41586-024-07024-9" target="_blank" rel="noopener">Nature study ↗</a></article>
+  <article><span>PACMAN · DIII-D</span><h3>Integrated machine-learning control</h3><p>A deployed architecture connects diagnostic processing, predictors and controllers to actuation.</p><a href="https://arxiv.org/abs/2511.08818" target="_blank" rel="noopener">PACMAN paper ↗</a></article></div>
+  <p class="takeaway">Our agent's proposed role: investigation between experiments.</p><p class="note">These papers concern plasma control. They do not demonstrate our LLM workflow or federation benefit.</p>
+</div></section>
+
+<section class="slide" id="transfer"><div class="slide-inner">
+  <div class="kicker">CROSS-DEVICE KNOWLEDGE</div><h2>Experience can transfer between machines</h2>
+  <p class="lede">A disruption predictor trained on J-TEXT was adapted to EAST.</p>
+  <div class="number-comparison"><div><strong>20</strong><span>EAST discharges for adaptation</span></div><div><strong>~1,900</strong><span>EAST discharges for direct training</span></div></div>
+  <p class="takeaway">Comparable prediction performance in that study.</p>
+  <p class="note">A transfer-learning result, not evidence for federated control or our agent.</p>
+  <a class="source" href="https://www.nature.com/articles/s42005-023-01296-9" target="_blank" rel="noopener">Disruption prediction for future tokamaks using parameter-based transfer learning ↗</a>
+</div></section>
+
+<section class="slide" id="investigator"><div class="slide-inner">
+  <div class="kicker">THE FLOWER APPLICATION</div><h2>An investigator requests local evidence</h2>
+  <ol class="sequence"><li><strong>Investigator</strong><span>Chooses the next evidence request using Flower's AgentApp harness.</span></li><li><strong>Facility steward</strong><span>Handles that request in a separate model context.</span></li><li><strong>Disclosure gateway</strong><span>Enforces release order and allowances; records releases and refusals.</span></li></ol>
+  <p class="takeaway">Each finding retains its source and its limits.</p>
+  <p class="note">Prototype sites are simulated. The application also supports remote site services.</p>
+  <a class="source" href="https://flower.ai/docs/agent/index.html" target="_blank" rel="noopener">Flower Agent documentation ↗</a>
+</div></section>
+
+<section class="slide" id="federation"><div class="slide-inner">
+  <div class="kicker">WHY A FEDERATED WORKSPACE</div><h2>Facilities retain control over disclosure</h2>
+  <div class="prose wide"><p>Partners can offer approved analyses while keeping their complete experimental records under local control.</p><p>The investigator compares the evidence that each facility chooses to release.</p><p class="emphasis">When pooling is feasible, a central agent remains a valid baseline.</p></div>
+  <p class="note">Policy allowances are not differential privacy. Separate facilities and improved investigation outcomes still need validation.</p>
+</div></section>
+
+<section class="slide" id="demo"><div class="slide-inner">
+  <div class="kicker">SWITCH TO THE RESEARCH APP</div><h2>The thermal investigation</h2>
+  <dl class="case-list"><div><dt>A</dt><dd>Apparent transport anomaly; delivered power remains unverified.</dd></div><div><dt>B</dt><dd>An independent power audit changes the interpretation at B.</dd></div><div><dt>C</dt><dd>The profile fails the demo's criterion for a useful analogy.</dd></div></dl>
+  <p class="takeaway">Recommend a measurement at A; keep the diagnosis unresolved.</p>
+  <a class="demo-link" href="http://127.0.0.1:8787/#thermal" target="_blank" rel="noopener">Open the application →</a>
+  <p class="note">The local rehearsal uses a reduced 1-D thermal model and no live LLM. Hosted runs are separately labelled in the app.</p>
+</div></section>
+
+<section class="slide" id="torax"><div class="slide-inner">
+  <div class="kicker">02 · HFMARL / CONTROL RESEARCH</div><h2>TORAX powers our control experiments</h2>
+  <p class="lede">Google DeepMind's tokamak transport simulator supplies the plasma evolution used by our control and cold-start studies.</p>
+  <div class="prose wide"><p>Research question: can source-device experience reduce the local trials needed by a new controller?</p><p>The saved cold-start study evaluates source handover followed by local learning. It uses policy search, not PPO or SAC.</p></div>
+  <p class="note">TORAX is a 1-D core transport model. These studies do not establish disruption avoidance on a physical reactor.</p>
+  <a class="source" href="https://github.com/google-deepmind/torax" target="_blank" rel="noopener">TORAX source and documentation ↗</a>
+</div></section>
+
+<section class="slide" id="atlas"><div class="slide-inner">
+  <div class="kicker">3D FEDERATION ATLAS</div><h2>Policy exchange across device models</h2>
+  <a class="source" href="visuals/atlas.html" target="_blank" rel="noopener">Open the atlas in its own tab ↗</a>
+  <iframe class="atlas" data-src="visuals/atlas.html" title="Interactive geographic tokamak federation atlas"></iframe>
+  <p class="note">Click machines to toggle participation. Actual aggregation code; synthetic updates and nominal operating points. Coloured channels represent control roles, not LLM messages or magnet wiring. No live facility connections.</p>
+</div></section>
+
+<section class="slide" id="scope"><div class="slide-inner">
+  <div class="kicker">WHAT EACH BLOCK ESTABLISHES</div><h2>Evidence workflow and control experiments</h2>
+  <div class="research-rows"><article><span>FLOWER AGENTS</span><h3>A working investigation workflow</h3><p>Requests, controlled disclosures and traceable findings from synthetic facilities.</p></article><article><span>TORAX / HFMARL</span><h3>A testable transfer hypothesis</h3><p>Compare source handover with local learning, including source costs and paired outcomes.</p></article></div>
+  <p class="takeaway">The 3D atlas explains the architecture. Experimental results must establish the benefit.</p>
+  <p class="note">The detailed results and narration for block 2 are maintained separately from the LLM-agent script.</p>
+</div></section>
+</body></html>

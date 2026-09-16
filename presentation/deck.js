@@ -9,6 +9,9 @@
   function show(index) {
     current = Math.max(0, Math.min(index, slides.length - 1));
     slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+    slides[current].querySelectorAll('iframe[data-src]').forEach(frame => {
+      if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
+    });
     const progress = document.getElementById('deck-progress');
     if (progress) progress.style.width = ((current + 1) / slides.length * 100) + '%';
     const counter = document.getElementById('deck-counter');
@@ -16,7 +19,7 @@
     if (slides[current].id) history.replaceState(null, '', '#' + slides[current].id);
   }
   function typing(target) {
-    return target && /^(input|textarea|select|button)$/i.test(target.tagName);
+    return target && (/^(input|textarea|select)$/i.test(target.tagName) || target.isContentEditable);
   }
   function init() {
     slides = [...document.querySelectorAll('section.slide')];
@@ -26,6 +29,7 @@
     document.getElementById('deck-prev')?.addEventListener('click', () => show(current - 1));
     document.addEventListener('keydown', (event) => {
       if (typing(event.target)) return;
+      if (event.key === ' ' && /^(button|a)$/i.test(event.target.tagName)) return;
       if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); show(current + 1); }
       else if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); show(current - 1); }
       else if (event.key === 'Home') show(0);
