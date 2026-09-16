@@ -39,12 +39,71 @@ This document details the complete 3D visual and CAD architecture implemented fo
     * `Wireframe` (toggle structural mesh wireframe)
     * `Toggle Rotation` & `Reset View`
 
-### 1.2 Streamlit 3D Dashboard & CAD Export UI
+### 1.2 Federation 3D Scene — how the agents work together
+* **Files:**
+  * Data layer: [`viz/federation_data.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/viz/federation_data.py)
+  * Scene builder: [`viz/federation_scene.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/viz/federation_scene.py)
+  * Tests: [`tests/test_federation_view.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/tests/test_federation_view.py)
+
+**The numbers in the picture are computed, not drawn.** Every distance, kernel
+value, staleness factor, admissibility decision and normalised weight comes
+from running `physics.dimensionless.encode`, `federation.similarity` and
+`federation.server.FedBuffServer` — the same modules the experiment runs. Only
+the policy *weights* in the buffer are stand-ins, because the app does not
+train; the shapes are the real ones, so payload sizes, the alignment
+permutation and the clipping radius are all computed on vectors of the size
+that would actually be transmitted.
+
+* **Scene vocabulary** (each element is a thing in the repository):
+
+| Element | What it is in the code |
+| :--- | :--- |
+| Station (4 of them) | One device. Size is $R_0^{0.45}$ — ordering true, ratio compressed so TCV-like stays visible next to ITER-like. |
+| **Sixteen D-shaped TF coils** per station | Same profile as the digital twin. Three colors overlay logical `thermal`, `particle`, `current` roles; they do not imply physical magnet wiring. |
+| Box on a coil | One actuator agent. `icrh` is drawn hollow and dark because it is `available=False`. |
+| Agent connections to a shared bus | The **flat** per-device team. No cluster heads — the three-level hierarchy was removed 2026-09-15. |
+| Coloured stream → hub | One role-matched aggregation. Particle density and speed follow the normalised weight `FedBuffServer` assigned. |
+| Grey broken link + red label | The admissibility gate **refused** the peer. Distinct from a small weight, because admissibility is a separate question asked first. |
+| Absent link | Sender switched off, or not buffered (`include_self=False`). A configuration choice, not a gate firing. |
+| Glowing particle streams | Travelling bunches with fading, swirling tails; device → hub density and speed track weight. White streams return to the target only when that channel formed an aggregate. |
+| Three hub rings, **not joined** | Role matching. `aggregation_weights` raises on mixed clusters, so no line in the scene may suggest the channels couple. |
+
+* **World map:** simplified vendored Natural Earth coastlines in `viz/world_outline.py`.
+  True host-lab pins connect to offset models so nearby European sites stay separate.
+  Model size is illustrative; the server's Greenland location is schematic.
+  Filled land, subdued graticules and glass panels provide a quieter backdrop.
+  Device and hub names use crisp screen-space labels; agent annotations and
+  contribution percentages appear on hover or at close zoom. Metallic coils,
+  translucent plasma and restrained base rings distinguish the reactor layers.
+* **Click to send:** all clients start silent. Click several models to select
+  independent senders; click again to stop. Orbit drags do not toggle clients.
+  All 16 subsets are precomputed through `FedBuffServer`, so links, tooltips,
+  hub state and effective peers update together. Return packets depend on a
+  channel having an aggregate, even when its target is silent.
+  Animation pause does not change participation. Sidebar changes reset selection;
+  tables below the scene show the explicitly labelled all-client reference round.
+* **Live controls** (sidebar) — target device, kernel bandwidth (defaulting to
+  the median heuristic), similarity on/off (method vs. baseline 2), safety and
+  regime gates, self-inclusion, FedAvg sample-count weighting, aggregation rule
+  (`geomedian` / `mean` / `median`), hidden-unit alignment, centred clipping,
+  and per-device update age / violation rate / config-epoch lag.
+* **Failure modes are surfaced, not hidden.** Both silent collapses that
+  `describe_device_set` warns about — every peer ignored, or all peers equal —
+  raise a banner, as do `uniform_fallback`, `rejected_all` and non-finite
+  weights.
+* **Standing caveat, shown in the app:** the distances come from
+  `OPERATING_POINTS`, still the hand-written nominal table rather than TORAX
+  output (README "Still open"). They are distances between tabulated points,
+  not between measured operating regions.
+
+### 1.3 Streamlit 3D Dashboard & CAD Export UI
 * **File:** [`app.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/app.py)
 * **Architecture:**
-  * Focused exclusively on the **Individual 3D Tokamak Digital Twin**.
+  * Two views behind a sidebar switch: **Federation (3D)** (default) and
+    **Digital twin (3D + CAD)**. The federation view shows the claim; the
+    digital-twin view shows the machine.
   * Sidebar tokamak selector (ITER-like, SPARC-like, DIII-D-like, TCV-like).
-  * Responsive 2-column layout:
+  * Digital-twin view, responsive 2-column layout:
     * **Left (2.4 width):** Full-height 3D WebGL interactive canvas embedding the selected tokamak reactor assembly.
     * **Right (1.1 width):**
       - Reactor engineering parameters card ($R_0, a, A, \kappa, B_0, I_p, P_\text{aux}$).
@@ -78,6 +137,9 @@ This document details the complete 3D visual and CAD architecture implemented fo
 | **Triangularity $\delta$** | `registry.py: Device.triangularity` | CAD profile sharpness in Paramak, outer contour of STL and STEP mesh | Requires full CAD re-meshing (`python scripts/generate_3d_models.py` with CadQuery/Paramak). |
 | **Toroidal Field $B_0$** | `registry.py: Device.B_0` | Stat card badge "Toroidal Field B0 [T]" | Automatically formatted in `app.py`. |
 | **Plasma Current $I_p$** | `registry.py: Device.Ip_nominal` | Stat card badge "Plasma Current Ip [MA]" | Automatically formatted in `app.py`. |
+| **Actuator cluster** | `registry.py: Actuator.cluster` | Coil overlay colors, agent boxes and matching server rings | Nothing to re-run — the federation scene reads the registry live. A fourth cluster requires extending the three-channel hub layout. |
+| **Actuator availability** | `registry.py: Actuator.available` | Agent box solid vs. hollow; the channel's action dimension and therefore its payload size | Nothing to re-run. If `icrh` ever gains a real TORAX source, the thermal payload stops being 776 B and `test_payload_matches_the_measured_claim` says so. |
+| **`OPERATING_POINTS`** | `registry.py` | Every distance, kernel weight, link thickness and packet rate in the federation scene | Nothing to re-run, but re-read the caveat: these are nominal hand-written values, not TORAX output. Replacing them (RUNBOOK "Before Phase 5") moves every link in the picture. |
 
 ---
 
@@ -85,7 +147,10 @@ This document details the complete 3D visual and CAD architecture implemented fo
 
 | Category | Relative Path | Purpose |
 | :--- | :--- | :--- |
-| **Frontend** | [`app.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/app.py) | Streamlit individual 3D tokamak visualizer & STEP export app |
+| **Frontend** | [`app.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/app.py) | Streamlit shell: federation 3D view + individual tokamak digital twin & STEP export |
+| **Federation data** | [`viz/federation_data.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/viz/federation_data.py) | Runs one personalised aggregation round through the real `FedBuffServer` and reports everything it did |
+| **Federation scene** | [`viz/federation_scene.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/viz/federation_scene.py) | Three.js scene: 4 stations x 3 coils, agent boxes, weighted links, 3-channel server |
+| **Federation tests** | [`tests/test_federation_view.py`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/tests/test_federation_view.py) | Pins the properties a viewer reads off the scene; no TORAX, no GPU |
 | **3D Viewport** | [`assets/3d/html/iter_like.html`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/assets/3d/html/iter_like.html) | ITER reactor viewport (plasma, vessel, TF coils, solenoid) |
 | **3D Viewport** | [`assets/3d/html/sparc_like.html`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/assets/3d/html/sparc_like.html) | SPARC reactor viewport (plasma, vessel, TF coils, solenoid) |
 | **3D Viewport** | [`assets/3d/html/diiid_like.html`](file:///C:/Users/dima2/IdeaProjects/tokamak-flower-berlin-2026/assets/3d/html/diiid_like.html) | DIII-D reactor viewport (plasma, vessel, TF coils, solenoid) |

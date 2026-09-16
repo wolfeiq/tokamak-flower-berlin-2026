@@ -24,3 +24,6 @@ apps/thermal-investigation/thermal_investigation/_devices.json
 apps/thermal-investigation/investigation-output/
 apps/thermal-investigation/investigation-state/
 *.fab
+
+# Scratch task brief handed to the IDE agent; not part of the project record.
+temp_task.txt
