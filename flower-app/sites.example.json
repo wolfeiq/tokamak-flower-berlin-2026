@@ -1,0 +1,8 @@
+{
+  "sites": [
+    {"id": "repository", "type": "checkpoint", "root": "../results/coldstart"},
+    {"id": "demo-a", "type": "demo"},
+    {"id": "demo-b", "type": "demo"},
+    {"id": "demo-c", "type": "demo"}
+  ]
+}

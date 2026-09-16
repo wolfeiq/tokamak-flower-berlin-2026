@@ -1,0 +1,12 @@
+.venv/
+.uv-cache/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.fab
+dist/
+local*.json
+smoke-output/
+.dashboard/
+.test-tmp*/
+pytest-cache-files-*/

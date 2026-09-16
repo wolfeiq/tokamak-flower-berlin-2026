@@ -1,3 +1,24 @@
+# Tokamak research and Fusion Investigator
+
+This repository contains **two separate projects**:
+
+| Project | Location | Purpose |
+|---|---|---|
+| **Fusion Investigator: Flower agent + frontend** | [`flower-app/`](flower-app/README.md) | Between-experiment investigations, cross-site evidence, and a synthetic heating validation demo |
+| **Original TORAX/control experiments** | `hfmarl/`, `scripts/`, `configs/`, root `tests/` | Simulation studies and cold-start/control experiments described below |
+
+The Flower app has its **own environment, lockfile, tests, and launch instructions**.
+Its toy-model demo is not TORAX, does not perform federated RL training, and does
+not supply additional evidence that federation solves cold start. The optional
+checkpoint reader only reads existing simulation summaries. Hosted agent runs
+use synthetic sites unless separate site services are configured.
+
+**Open the frontend:** follow the [app quick start](flower-app/README.md#local-frontend).
+Source code is included; runtime logs, account credentials, virtual environments,
+and new experiment outputs are not part of the app commit.
+
+---
+
 # HFMARL for research tokamaks
 
 Federated multi-agent RL for tokamak control, simulated in

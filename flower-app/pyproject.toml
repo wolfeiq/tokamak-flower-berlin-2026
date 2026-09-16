@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fusion-investigator"
+version = "0.1.0"
+description = "Flower AgentApp for cross-facility fusion model investigation"
+license = { file = "LICENSE.md" }
+requires-python = ">=3.11,<4"
+dependencies = ["flwr>=1.37.0,<1.38", "openai>=2.16,<3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+fusion-investigator = "fusion_agent.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fusion_agent"]
+
+[tool.flwr.app]
+publisher = "local"
+display-name = "Fusion Investigator"
+fab-format-version = 1
+flwr-version-target = "1.37.0"
+fab-include = ["fusion_agent/**/*.py", "README.md", "LICENSE.md"]
+
+[tool.flwr.app.components]
+agentapp = "fusion_agent.agent_app:app"
+
+[tool.flwr.app.config.agent]
+model = "openai/gpt-5.6-sol"
+input = "Investigate heating underperformance at demo-a. Compare partner evidence, validate a candidate, and recommend the next diagnostic."
+max-tool-turns = 5
+max-tool-calls = 16
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
