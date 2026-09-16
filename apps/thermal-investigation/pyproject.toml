@@ -23,7 +23,9 @@ thermal_investigation = ["dashboard.html"]
 publisher = "local"
 fab-format-version = 1
 flwr-version-target = "1.37.0"
-fab-include = ["thermal_investigation/**/*.py", "README.md", "LICENSE"]
+# The device parameters and any TORAX fixtures are data the app needs at
+# runtime; a .py-only bundle silently ships an app that cannot start.
+fab-include = ["thermal_investigation/**/*.py", "thermal_investigation/*.json", "README.md", "LICENSE"]
 
 [tool.flwr.app.components]
 agentapp = "thermal_investigation.agent_app:app"

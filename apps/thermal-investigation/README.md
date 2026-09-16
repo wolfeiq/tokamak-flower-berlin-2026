@@ -84,24 +84,63 @@ or allowance. Use separate working directories for live and rehearsal ledgers.
 
 ## What is computed
 
-The preparation script copies the repo's `hfmarl/identification/closure.py`
-byte-for-byte into the FAB and prints its hash. This keeps TORAX/JAX out of the
-agent environment. Regenerate after changing the estimator; the copy is gitignored.
+`scripts/prepare_thermal_investigation.py` copies the repo's pure-NumPy
+`closure.py` into the FAB and exports each facility's machine parameters from
+`hfmarl/devices/registry.py`. This keeps TORAX and JAX out of the agent
+environment while leaving every number traceable to its source. Regenerate
+after changing either; both copies are gitignored.
 
-These are manufactured steady-state SPATIAL profiles, not TORAX trajectories,
-real incidents, or validated fault diagnoses:
+The three facilities are three DIFFERENT real devices, not three tunings of one
+fixture:
 
-- A and B have usable gradients. The estimator calculates apparent transport
-  using a source assumed at 1.6 times the constructed source.
-- B has a synthetic independent source audit. Recalculation with that source
-  returns transport near the fixture's reference value.
-- A lacks that measurement. B's findings cannot establish A's cause.
-- C has a flat profile: transport estimation is invalid; further release is denied.
+| Site | Device | B_0 | a | Role |
+| --- | --- | ---: | ---: | --- |
+| A | `diiid_like` | 2.0 T | 0.67 m | under investigation, no source audit |
+| B | `sparc_like` | 12.2 T | 0.57 m | same ambiguity, audit available |
+| C | `tcv_like` | 1.44 T | 0.25 m | barely heated, unidentifiable |
 
-Constants and thresholds are illustrative assumptions, not empirically calibrated
-cross-machine criteria. B's audit is a synthetic measurement, not something
-inferred from temperature. No `chi_true` or `q_true` arrays enter model contexts
-or exported reports. Units are normalised toy units.
+Profiles are SOLVED, not manufactured. The previous version called
+`closure.manufactured_case`, which picks T(rho) and back-computes the source
+that makes it consistent -- a unit-test device for the estimator, with nothing
+device-specific in it, which is why every facility used to look alike.
+`profiles.py` runs the causality the physical way round: a source profile and a
+stiff critical-gradient transport model are given, and T(rho) is solved from
+steady-state power balance by bisection on each cell. Device identity enters
+through the gyro-Bohm scale chi_gB = rho_s^2 c_s / a, so B's 12.2 T field gives
+it roughly an order of magnitude less transport than A for the same heating.
+
+`tests/test_profiles.py` pins the parts that can fail silently: the solution
+satisfies n chi dT/dr = q to about 1e-12, power balance recovers the chi that
+was solved for to within 25%, an overstated source inflates apparent transport,
+and C stays below the critical gradient.
+
+What the demonstration then shows, all of it emergent rather than hardcoded:
+
+- A and B develop usable gradients; the estimator is fed the COMMANDED source,
+  which overstates delivery by 1.6x, and reports transport above reference.
+- B has an independent audit of delivered power. Re-running the same estimator
+  against it returns transport near reference.
+- A has no such measurement, so B's resolution does not transfer to A.
+- C never reaches the critical gradient, so transport is not identifiable there
+  at all and further release is denied.
+
+This is a REDUCED 1-D model, not TORAX: cylindrical, electron channel only,
+steady state, no equilibrium, no pedestal physics, no radiation or fusion
+terms, and a hand-written chi rather than a gyrokinetic surrogate. Its
+constants are illustrative and not calibrated against experiment. Whether a
+device's source is audited is a scenario property, not a physical prediction.
+
+### Real TORAX profiles
+
+`scripts/generate_thermal_fixtures.py` runs TORAX 1.4.3 on the same devices and
+writes `_fixtures.json`, which the app prefers when present. Every released
+finding carries a `provenance` field, so a report built on TORAX is
+distinguishable from one built on the reduced solve.
+
+TORAX will not install on every machine: it requires `jax>=0.10.0`, and jaxlib
+publishes no macOS x86_64 wheel past 0.4.38, so Intel Macs cannot run it at
+all. `notebooks/thermal_investigation_torax.ipynb` runs the generator on Colab,
+which is Linux x86_64, and downloads the fixtures to commit.
 
 ## Disclosure controls and limitations
 

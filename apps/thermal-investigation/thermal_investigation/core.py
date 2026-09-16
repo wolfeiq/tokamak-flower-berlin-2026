@@ -25,61 +25,144 @@ def _closure():
     # The build helper copies the repo's actual pure-NumPy implementation.
     # In a checkout, import it directly without requiring TORAX installation.
     try:
-        from hfmarl.identification.closure import manufactured_case, chi_from_power_balance
+        from hfmarl.identification.closure import chi_from_power_balance
     except ImportError:
-        from ._closure import manufactured_case, chi_from_power_balance
-    return manufactured_case, chi_from_power_balance
+        from ._closure import chi_from_power_balance
+    return chi_from_power_balance
+
+
+def _devices():
+    """Machine parameters copied from hfmarl/devices/registry.py at build time."""
+    path = Path(__file__).with_name("_devices.json")
+    if not path.exists():
+        raise RuntimeError(
+            "_devices.json is missing. Run scripts/prepare_thermal_investigation.py "
+            "from the repository root before building or running this app."
+        )
+    return json.loads(path.read_text())
+
+
+# Per-site scenario. These are investigation circumstances -- how hard the
+# machine was heated, and whether anyone independently measured the delivered
+# power -- NOT physics fudge factors. The profiles themselves come out of the
+# solve in profiles.py on each device's real parameters.
+SCENARIOS = {
+    # Heated normally; apparent transport is elevated only because the
+    # commanded power is assumed delivered.
+    "A": {"power_fraction": 1.0, "source_audit": False},
+    # Same observable ambiguity, but here an independent audit of delivered
+    # power exists, so the ambiguity is resolvable at B and only at B.
+    "B": {"power_fraction": 1.0, "source_audit": True},
+    # Barely heated: the profile never reaches the critical gradient, so it
+    # carries no information about transport at all.
+    "C": {"power_fraction": 0.001, "source_audit": False},
+}
+
+# The commanded source is overestimated by this factor relative to what the
+# plasma actually absorbed. This is the whole diagnostic ambiguity: assuming it
+# away turns a heating-delivery fault into an apparent transport anomaly.
+ASSUMED_SOURCE_FACTOR = 1.6
+# Below the critical normalised gradient a profile is too flat to identify
+# transport, whatever estimator is used.
+USABLE_R_OVER_LT = 4.0
+_WINDOW = slice(10, 90)
+
+
+def _band(ratio: float) -> str:
+    """Coarse, fixed bins. Requesters cannot move these thresholds."""
+    return "above-reference" if ratio > 1.25 else (
+        "below-reference" if ratio < 0.8 else "near-reference"
+    )
+
+
+def _torax_fixture(site: str):
+    """Real TORAX profiles, when scripts/generate_thermal_fixtures.py has run.
+
+    Absent by default: TORAX needs jax>=0.10.0, which publishes no macOS x86_64
+    wheel, so the reduced solve in profiles.py is what most machines get. The
+    two paths are deliberately interchangeable and always distinguishable by the
+    provenance string that travels with every released finding.
+
+    chi_true is ground truth the reduced solver knows and TORAX output does not
+    carry, so the reference here is the transport recovered from the DELIVERED
+    source -- the same quantity, obtained the way an experimentalist would.
+    """
+    path = Path(__file__).with_name("_fixtures.json")
+    if not path.exists():
+        return None
+    blob = json.loads(path.read_text())
+    if site not in blob:
+        return None
+    fixture = blob[site]
+    r = np.asarray(fixture["r"], dtype=float)
+    n_e = np.asarray(fixture["n_e"], dtype=float)
+    T_e = np.asarray(fixture["T_e_keV"], dtype=float) * 1.0e3 * 1.602176634e-19
+    source = np.asarray(fixture["source"], dtype=float)
+    chi_reference = _closure()(r, n_e, T_e, source).chi
+    return {"r": r, "n_e": n_e, "T_e": T_e, "source": source,
+            "chi_true": chi_reference, "provenance": fixture["provenance"]}
 
 
 def analyse_site(site: str) -> dict:
     """Local computation. Raw arrays never leave this function.
 
-    Manufactured steady-state fixtures, not TORAX runs or real plant incidents.
-    Comparing commanded with independently verified source is an explicit
-    synthetic measurement assumption. No hidden injected labels are returned.
+    Profiles are solved, not manufactured: see profiles.py. Each facility is a
+    different real machine from the repo's device registry, so the profiles
+    differ because the machines differ. Ground truth (chi_true, the delivered
+    source) stays inside this function and is never returned.
     """
     if site not in FACILITIES:
         raise ValueError("Unknown site")
-    manufacture, estimate = _closure()
-    case = manufacture(lambda r: np.ones_like(r), T_axis=5.0 if site != "C" else 0.2)
-    # At B only, an independent source audit exists in the fixture.
-    # A has the SAME observable ambiguity but no source audit.
-    assumed_source = case["source"] * 1.6
-    result = estimate(case["rho"], case["n_e"], case["T_e"], assumed_source)
-    valid = result.chi[np.isfinite(result.chi)]
-    usable = bool(valid.size > 10)
+    from . import profiles as _profiles
+
+    estimate = _closure()
+    device = _devices()[site]
+    scenario = SCENARIOS[site]
+    case = _torax_fixture(site) or _profiles.simulate(device, scenario["power_fraction"])
+
+    r, n_e, T_e = case["r"], case["n_e"], case["T_e"]
+    R_major = float(device["R_major"])
+    r_over_lt = R_major * np.abs(np.gradient(T_e, r)) / np.maximum(T_e, 1e-30)
+    usable = bool(np.median(r_over_lt[_WINDOW]) >= USABLE_R_OVER_LT)
+
+    # What an analyst sees: the COMMANDED power, which overstates delivery.
+    assumed_source = case["source"] * ASSUMED_SOURCE_FACTOR
+    apparent = estimate(r, n_e, T_e, assumed_source)
+    reference = float(np.nanmedian(case["chi_true"][_WINDOW]))
+    apparent_ratio = float(np.nanmedian(apparent.chi)) / max(reference, 1e-30)
+
     context = {
-        "regime": "manufactured-steady-state",
+        "regime": "solved-steady-state",
         "geometry": "cylindrical",
         "subsystem": "thermal-transport",
+        # Coarse machine class, not the device name: enough to judge whether an
+        # analogy is even worth testing, without identifying the facility.
+        "field_class": "high-field" if float(device["B_0"]) >= 5.0 else "moderate-field",
+        "size_class": "compact" if float(device["a_minor"]) < 0.6 else "medium",
         "gradient_quality": "usable" if usable else "insufficient",
         "symptom": "weak-temperature-response" if usable else "flat-temperature-profile",
     }
-    # Coarse bins are fixed; requesters cannot change thresholds or query slices.
-    band = "unidentifiable" if not usable else (
-        "above-reference" if float(np.median(valid)) > 1.2 else "near-reference"
-    )
     balance = {
-        "apparent_transport": band,
+        "apparent_transport": _band(apparent_ratio) if usable else "unidentifiable",
         "source_basis": "assumed-command",
         "source_verified": False,
         "causal_conclusion": "not-identifiable-from-this-evidence",
         "profile_shape": [round(float(x), 1) for x in
-                          (case["T_e"][::10] / max(float(case["T_e"].max()), 1e-9))],
+                          (T_e[::10] / max(float(T_e.max()), 1e-30))],
         "profile_units": "normalised-temperature",
     }
     source_check = {
-        "independent_audit_available": site == "B",
-        "finding": "delivered-below-assumed" if site == "B" else "unknown",
-        "corrected_transport": "near-reference" if site == "B" else "not-computed",
+        "independent_audit_available": bool(scenario["source_audit"]),
+        "finding": "delivered-below-assumed" if scenario["source_audit"] else "unknown",
+        "corrected_transport": "not-computed",
     }
-    if site == "B":
-        corrected = estimate(case["rho"], case["n_e"], case["T_e"], case["source"])
-        median = float(np.nanmedian(corrected.chi))
-        source_check["corrected_transport"] = (
-            "near-reference" if 0.8 <= median <= 1.2 else "above-reference"
-        )
-    return {"context": context, "balance": balance, "source_check": source_check}
+    if scenario["source_audit"]:
+        # Re-run the same estimator against the audited delivered power.
+        corrected = estimate(r, n_e, T_e, case["source"])
+        corrected_ratio = float(np.nanmedian(corrected.chi)) / max(reference, 1e-30)
+        source_check["corrected_transport"] = _band(corrected_ratio)
+    return {"context": context, "balance": balance, "source_check": source_check,
+            "provenance": case.get("provenance", "reduced-1d-transport-v1")}
 
 
 class Gateway:
@@ -122,12 +205,14 @@ class Gateway:
                 elif spent + cost > self.allowance:
                     result = {**base, "status": "denied", "reason": "budget-exhausted", "spent": spent}
                 else:
-                    finding = analyse_site(site)[kind]
+                    analysis = analyse_site(site)
+                    finding = analysis[kind]
+                    provenance = analysis["provenance"]
                     evidence_id = hashlib.sha256(f"{CASE}:{site}:{kind}".encode()).hexdigest()[:12]
                     result = {**base, "status": "released", "finding": finding,
                               "evidence_id": evidence_id, "cost": cost, "spent": spent + cost,
                               "allowance": self.allowance, "cached": False,
-                              "provenance": "synthetic-manufactured-v1"}
+                              "provenance": provenance}
                     db.execute("INSERT INTO releases VALUES (?,?,?,?,?)", (site, CASE, kind, cost, json.dumps(result)))
             db.execute("INSERT INTO audit(event) VALUES (?)", (json.dumps(result, allow_nan=False),))
         return result
