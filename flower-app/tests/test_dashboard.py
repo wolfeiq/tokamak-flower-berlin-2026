@@ -122,3 +122,24 @@ def test_decode_logs_keeps_report_separate_from_audit():
     parsed = decode_logs("Runtime preamble\n# Report\nHello\nFUSION_TOOL_AUDIT []\n")
     assert parsed["report"] == "# Report\nHello"
     assert parsed["audit"] == []
+
+
+def test_rehearsal_replay_and_manual_disclosure_use_real_gateway(dashboard):
+    app, base = dashboard
+    with post(
+        base, "/api/release", {"site": "facility-a", "kind": "balance"}
+    ) as response:
+        assert json.load(response)["events"][-1]["reason"] == "prerequisite-missing"
+    with post(base, "/api/replay", {}) as response:
+        first = json.load(response)
+    assert first["mode"] == "local-rehearsal"
+    assert len(first["events"]) == 10
+    assert first["events"][4]["reason"] == "analogy-not-applicable"
+    assert first["events"][8]["reason"] == "unsupported-request"
+    assert first["events"][-1]["cached"]
+    with post(base, "/api/replay", {}) as response:
+        second = json.load(response)
+    assert all(e["cached"] for e in second["events"] if e["status"] == "released")
+    assert not app.active  # Rehearsal cannot launch a hosted run.
+    restored = Dashboard(app.state_dir)
+    assert restored.thermal_snapshot() == second

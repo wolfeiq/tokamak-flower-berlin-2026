@@ -40,6 +40,7 @@ async function loadEvidence() {
 async function refreshRun() {
   try {
     const run=await api('/api/run');currentRun=run;
+    if(typeof refreshHostedThermal==='function')refreshHostedThermal(run);
     $('run-status').textContent=run.status.replace('finished:','').replaceAll(':',' · ');
     $('run-button').disabled=run.active;
     $('run-button').innerHTML=run.active?'Investigation running…':'Run investigation <span>↗</span>';
@@ -47,7 +48,8 @@ async function refreshRun() {
     $('run-id').textContent=run.run_id || 'Awaiting submission';
     const link=run.run_id?`https://flower.ai/runs/${encodeURIComponent(run.run_id)}?from=federation&federation=%40marykor%2Fpersonal`:'https://flower.ai/federations/marykor/personal';
     $('run-id').href=link; document.querySelectorAll('.flower-link').forEach(el=>el.href=link);
-    $('run-caption').textContent=run.active?'Agent is working · updates automatically':run.status.includes('completed')?'Investigation completed · evidence available':run.status==='idle'?'Ready for an investigation':run.status;
+    const hasThermal=(run.audit||[]).some(call=>call.tool==='request_evidence');
+    $('run-caption').textContent=run.active?'Agent is working · updates automatically':run.status.includes('completed')?(hasThermal?'Investigation completed · thermal evidence available':'Saved toy-only report · no THERMAL evidence'):run.status==='idle'?'Ready for an investigation':run.status;
     if(renderedReport!==run.report){$('report-text').innerHTML=markdown(run.report || (run.active?'The hosted agent is investigating. Its report will appear here.':'Submit a brief to start a hosted investigation.'));renderedReport=run.report;}
     $('logs').textContent=run.logs || 'No runtime logs yet.';
     const audit=JSON.stringify(run.audit||[]);

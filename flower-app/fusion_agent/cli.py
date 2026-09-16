@@ -48,6 +48,7 @@ def main():
                     "diagnose_heating", {"site": s, "case_id": "heating-response"}
                 )
                 for s in sites
+                if "diagnose_heating" in sites[s].describe()["capabilities"]
             ],
             "validation": box.execute(
                 "validate_heating",

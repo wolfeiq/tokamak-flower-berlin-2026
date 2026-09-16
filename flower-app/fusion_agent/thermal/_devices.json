@@ -1,0 +1,50 @@
+{
+  "A": {
+    "B_0": 2.0,
+    "Ip_nominal": 1500000.0,
+    "P_aux": 20000000.0,
+    "R_major": 1.67,
+    "T_e_keV": 2.5,
+    "T_i_keV": 2.5,
+    "T_pedestal_keV": 0.5688679245283019,
+    "a_minor": 0.67,
+    "elongation": 1.8,
+    "n_e": 5e+19,
+    "n_rho": 101,
+    "name": "diiid_like",
+    "rho_boundary": 0.85,
+    "volume": 26.63595807888187
+  },
+  "B": {
+    "B_0": 12.2,
+    "Ip_nominal": 8700000.0,
+    "P_aux": 25000000.0,
+    "R_major": 1.85,
+    "T_e_keV": 7.0,
+    "T_i_keV": 7.0,
+    "T_pedestal_keV": 2.9521698113207546,
+    "a_minor": 0.57,
+    "elongation": 1.97,
+    "n_e": 3e+20,
+    "n_rho": 101,
+    "name": "sparc_like",
+    "rho_boundary": 0.85,
+    "volume": 23.37315865120265
+  },
+  "C": {
+    "B_0": 1.44,
+    "Ip_nominal": 250000.0,
+    "P_aux": 4500000.0,
+    "R_major": 0.88,
+    "T_e_keV": 1.0,
+    "T_i_keV": 0.4,
+    "T_pedestal_keV": 0.15283018867924528,
+    "a_minor": 0.25,
+    "elongation": 1.5,
+    "n_e": 3e+19,
+    "n_rho": 101,
+    "name": "tcv_like",
+    "rho_boundary": 0.85,
+    "volume": 1.628484726179744
+  }
+}

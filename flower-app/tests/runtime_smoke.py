@@ -51,10 +51,10 @@ def main():
                             "type": "function_call",
                             "id": "fc_smoke",
                             "call_id": "smoke_call",
-                            "name": "diagnose_heating",
+                            "name": "request_evidence",
                             "status": "completed",
                             "arguments": json.dumps(
-                                {"site": "demo-a", "case_id": "heating-response"}
+                                {"site": "facility-b", "kind": "context"}
                             ),
                         }
                     ]
@@ -67,6 +67,20 @@ def main():
                     "model": "smoke-model",
                     "output": calls,
                 }
+                if (
+                    body.get("tools")
+                    and body["tools"][0]["name"] == "release_requested"
+                ):
+                    response["output"] = [
+                        {
+                            "type": "function_call",
+                            "id": "fc_steward",
+                            "call_id": "steward_call",
+                            "name": "release_requested",
+                            "status": "completed",
+                            "arguments": "{}",
+                        }
+                    ]
                 if not body.get("tools"):
                     response["output"] = [
                         {
@@ -92,8 +106,9 @@ def main():
                 return
             assert tool_outputs, "Agent never supplied tool evidence"
             result = json.loads(tool_outputs[-1]["output"])
-            assert result["ranked"][0]["efficiency"] == 0.7
-            text = "SMOKE_OK: real Flower runtime executed synthetic site analysis."
+            assert result["finding"]["gradient_quality"] == "usable"
+            assert result["status"] == "released"
+            text = "SMOKE_OK: real Flower runtime executed a facility steward and disclosure gateway."
             message = {
                 "id": "msg_smoke",
                 "type": "message",

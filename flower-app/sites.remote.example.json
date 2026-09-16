@@ -1,5 +1,8 @@
 {
   "sites": [
+    {"id": "facility-a", "type": "remote", "url": "http://127.0.0.1:8766", "token_env": "FUSION_THERMAL_TOKEN"},
+    {"id": "facility-b", "type": "thermal", "facility": "B"},
+    {"id": "facility-c", "type": "thermal", "facility": "C"},
     {"id": "demo-a", "type": "remote", "url": "http://127.0.0.1:8765", "token_env": "FUSION_SITE_TOKEN"},
     {"id": "demo-b", "type": "demo"},
     {"id": "demo-c", "type": "demo"}

@@ -1,10 +1,17 @@
-# Tokamak research and Fusion Investigator
+# Fusion app and tokamak research
 
-This repository contains **two separate projects**:
+## Fusion app — separate from the experiments
+
+The combined **Fusion Investigator + THERMAL** app lives in [`flower-app/`](flower-app/README.md).
+It combines the live frontend, Flower investigator, facility stewards, disclosure
+gateway, reduced transport profiles, and evidence replay in one application.
+
+This repository keeps the following components separate:
 
 | Project | Location | Purpose |
 |---|---|---|
-| **Fusion Investigator: Flower agent + frontend** | [`flower-app/`](flower-app/README.md) | Between-experiment investigations, cross-site evidence, and a synthetic heating validation demo |
+| **Fusion app: Fusion Investigator + THERMAL** | [`flower-app/`](flower-app/README.md) | Between-experiment investigation, controlled cross-site evidence, radial profiles, and an independent toy sandbox |
+| **3D visualization / CAD viewer** | `app.py`, `assets/3d/`, [viewer notes](visual-additions.md) | Separate visualization and geometry-export work |
 | **Original TORAX/control experiments** | `hfmarl/`, `scripts/`, `configs/`, root `tests/` | Simulation studies and cold-start/control experiments described below |
 
 The Flower app has its **own environment, lockfile, tests, and launch instructions**.
@@ -270,3 +277,10 @@ build our own environment because its abstractions are single-agent and
 ITER-hybrid-shaped, but it got those two details right and we copy them.
 
 TORAX is Apache-2.0, Google DeepMind ([arXiv:2406.06718](https://arxiv.org/abs/2406.06718)).
+
+## Cross-facility thermal investigation (Flower AgentApp)
+
+THERMAL is now merged into the **[Fusion app](flower-app/README.md)**.
+Use that folder for the frontend, agent, disclosure gateway, tests, and setup.
+The old `apps/thermal-investigation/` path is a migration pointer.
+The original TORAX/RL experiments and their results remain separate.

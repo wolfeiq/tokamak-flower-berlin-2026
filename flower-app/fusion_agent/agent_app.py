@@ -9,6 +9,7 @@ from openai import OpenAI
 
 from .orchestrator import history, investigate
 from .sites import load_sites
+from .steward import FacilitySteward
 from .tools import Toolbox
 
 app = AgentApp()
@@ -25,12 +26,16 @@ def main(agent: AgentSession, context: Context) -> None:
     max_calls = context.run_config.get("agent.max-tool-calls", 16)
     if type(max_calls) is not int or not 1 <= max_calls <= 24:
         raise ValueError("agent.max-tool-calls must be between 1 and 24")
-    toolbox = Toolbox(load_sites(os.environ.get("FUSION_SITES_CONFIG")), max_calls)
     client = OpenAI(
         base_url=os.environ["FLWR_RUNTIME_BASE_URL"],
         api_key=os.environ["FLWR_RUNTIME_API_KEY"],
         max_retries=0,
         timeout=60,
+    )
+    toolbox = Toolbox(
+        load_sites(os.environ.get("FUSION_SITES_CONFIG")),
+        max_calls,
+        steward=FacilitySteward(client, model),
     )
     messages = history(agent.events.get_trace(), context.run_id, prompt.strip())
     try:
@@ -40,7 +45,7 @@ def main(agent: AgentSession, context: Context) -> None:
             toolbox,
             model,
             messages,
-            context.run_config.get("agent.max-tool-turns", 5),
+            context.run_config.get("agent.max-tool-turns", 8),
         )
         print(answer)
     finally:

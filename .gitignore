@@ -18,3 +18,9 @@ results/torax_plots/
 results/**/*.json
 
 .idea/
+# Thermal investigation: generated bundle source, private ledger and demo output
+apps/thermal-investigation/thermal_investigation/_closure.py
+apps/thermal-investigation/thermal_investigation/_devices.json
+apps/thermal-investigation/investigation-output/
+apps/thermal-investigation/investigation-state/
+*.fab

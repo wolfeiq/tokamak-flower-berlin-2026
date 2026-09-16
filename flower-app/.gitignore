@@ -8,5 +8,8 @@ dist/
 local*.json
 smoke-output/
 .dashboard/
+.fusion-state/
+# Optional private or generated profile arrays never belong in an agent bundle.
+fusion_agent/thermal/_fixtures.json
 .test-tmp*/
 pytest-cache-files-*/

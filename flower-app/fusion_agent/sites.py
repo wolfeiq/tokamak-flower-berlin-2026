@@ -17,6 +17,8 @@ OPERATIONS = {
     "list_cases",
     "diagnose_heating",
     "validate_heating",
+    "request_evidence",
+    "evidence_history",
 }
 
 
@@ -65,6 +67,62 @@ class LocalSite:
         else:
             result = evidence.inspect_study(self.root, **arguments)
         return {"site": self.site_id, **result}
+
+
+class ThermalSite:
+    """Fixed facility identity and service-owned ledger; no caller-supplied paths."""
+
+    def __init__(self, site_id, facility, ledger_dir=None):
+        if facility not in ("A", "B", "C"):
+            raise ValueError("Unknown thermal facility")
+        self.site_id, self.facility = site_id, facility
+        root = Path(ledger_dir or os.environ.get("FUSION_LEDGER_DIR", ".fusion-state"))
+        # Facility IDs are fixed; site_id is never interpolated into a file path.
+        self.ledger = root / f"thermal-{facility}.sqlite3"
+
+    def gateway(self):
+        from .thermal.core import Gateway
+
+        return Gateway(self.ledger)
+
+    def describe(self):
+        return {
+            "site": self.site_id,
+            "transport": "local",
+            "kind": "synthetic reduced 1D transport investigation",
+            "capabilities": ["list_cases", "request_evidence", "evidence_history"],
+        }
+
+    def _public(self, event):
+        return {**event, "site": self.site_id}
+
+    def call(self, operation, arguments):
+        if operation == "list_cases" and not arguments:
+            return {
+                "site": self.site_id,
+                "cases": [
+                    {
+                        "case_id": "thermal-response",
+                        "description": "Heating-source versus transport ambiguity",
+                    }
+                ],
+            }
+        if operation == "evidence_history" and not arguments:
+            gateway = self.gateway()
+            return {
+                "site": self.site_id,
+                "case_id": gateway.case_id,
+                "events": [
+                    self._public(e)
+                    for e in gateway.events()
+                    if e.get("site") == self.facility
+                ],
+            }
+        if operation == "request_evidence" and set(arguments) == {"kind"}:
+            return self._public(
+                self.gateway().request(self.facility, arguments["kind"])
+            )
+        raise ValueError("Operation unavailable at this site")
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -125,17 +183,25 @@ class RemoteSite:
             if len(body) > 256_000:
                 raise ValueError("Site response exceeds analysis size limit")
             data = json.loads(body)
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except (HTTPError, URLError, TimeoutError, ConnectionError) as exc:
             raise ValueError("Site unavailable or request rejected") from exc
         if not isinstance(data, dict) or data.get("site") != self.site_id:
             raise ValueError("Site response identity mismatch")
         return data
 
 
-def load_sites(config: str | None = None) -> dict:
+def load_sites(config: str | None = None, ledger_dir=None) -> dict:
     # Configuration is operator-owned, never a model-controlled filesystem path.
     if not config:
-        return {s: LocalSite(s, demo=True) for s in heating.PROFILES}
+        return {
+            **{
+                f"facility-{s.lower()}": ThermalSite(
+                    f"facility-{s.lower()}", s, ledger_dir
+                )
+                for s in "ABC"
+            },
+            **{s: LocalSite(s, demo=True) for s in heating.PROFILES},
+        }
     path = Path(config).resolve()
     rows = json.loads(path.read_text())["sites"]
     result = {}
@@ -149,6 +215,8 @@ def load_sites(config: str | None = None) -> dict:
             site = LocalSite(site_id, (path.parent / row["root"]).resolve())
         elif row["type"] == "remote":
             site = RemoteSite(site_id, row["url"], row["token_env"])
+        elif row["type"] == "thermal":
+            site = ThermalSite(site_id, row["facility"], ledger_dir)
         else:
             raise ValueError("Unknown site adapter")
         result[site_id] = site

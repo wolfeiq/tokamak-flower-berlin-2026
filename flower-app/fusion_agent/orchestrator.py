@@ -7,6 +7,18 @@ import json
 from .tools import SCHEMAS
 
 INSTRUCTIONS = """You are Fusion Investigator, a between-experiment research assistant.
+The primary workflow investigates weak thermal response at facility-a. Discover
+sites, then request_evidence through separate facility stewards. Seek A's context
+and balance; compare B and C and request source_check only when useful. A site
+gateway enforces context -> balance -> source_check, persistent policy costs and
+rejection when the demo's gradient criterion is not met. Respect refusals.
+These are reduced 1D synthetic transport solves by default. Read provenance;
+operator-configured TORAX snapshots are not live TORAX execution. The assumed
+source can differ from delivered heating. B's audited result suggests a next
+measurement at A, not A's diagnosis. Policy units are not differential privacy.
+demo-a/b/c tools are a SEPARATE dimensionless toy sandbox: their fitted parameters
+and power-scaling validation cannot establish a cause or validate a change for
+facility-a/b/c. Never combine the two models as if they were the same experiment.
 Use configured site tools for factual claims about experiments. Discover sites
 and cases/studies before analysis. For a heating investigation, inspect the
 requesting site's case and relevant partner cases; compare hypotheses, then use
@@ -108,10 +120,12 @@ def investigate(
         input=items,
         instructions=INSTRUCTIONS
         + "\nTool access has ended. Answer from obtained evidence and explicitly identify gaps.",
+        tools=SCHEMAS,
+        tool_choice="none",
         stream=True,
-        max_output_tokens=2400,
+        max_output_tokens=6000,
     )
-    text, completed = [], False
+    text, completed, terminal = [], False, None
     for event in stream:
         events.emit(event.to_dict())
         if event.type in ("error", "response.failed", "response.incomplete"):
@@ -120,6 +134,17 @@ def investigate(
             text.append(event.delta)
         if event.type == "response.completed":
             completed = True
+            terminal = event.to_dict()
     if not completed:
         raise RuntimeError("Model stream ended without a completed response")
-    return "".join(text)
+    answer = "".join(text)
+    if not answer.strip() and terminal:
+        answer = "".join(
+            part.get("text", "")
+            for item in terminal.get("response", {}).get("output", [])
+            for part in item.get("content", [])
+            if part.get("type") == "output_text"
+        )
+    if not answer.strip():
+        raise RuntimeError("Model completed without a visible report")
+    return answer

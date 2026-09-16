@@ -1,4 +1,4 @@
-# Fusion Investigator — Flower AgentApp
+# Fusion Investigator + THERMAL — Flower AgentApp
 
 **Separate application — not part of the TORAX/RL experiment pipeline.**
 This folder contains the Flower agent, local web frontend, site adapters, and its
@@ -15,6 +15,11 @@ federated policies, and is not additional evidence that federation solves cold
 start. Its optional checkpoint reader can inspect existing experiment summaries
 without changing them. The hosted agent defaults to synthetic sites only.
 
+Version 0.2 combines Fusion Investigator's live frontend, remote adapters and
+checkpoint reader with THERMAL's reduced transport solver, facility stewards and
+disclosure gateway. There is one AgentApp and one dashboard. See
+[merge notes](MERGE.md) for provenance, fixes and validation limits.
+
 A between-experiment assistant built with Flower's **AgentApp harness**. Flower
 owns app execution, the model bridge, run-series traces and shared run state.
 The app supplies fusion analysis tools and a bounded tool loop, following
@@ -24,8 +29,16 @@ The app supplies fusion analysis tools and a bounded tool loop, following
 
 - Read this repository's atomic cold-start checkpoints, including partial runs,
   source costs, paired outcomes, censoring and selection-trial sensitivity.
-- Investigate heating underperformance across three **synthetic** facilities.
-  Local fitting ranks reduced heating effectiveness against increased heat loss.
+- Investigate heating-source versus transport ambiguity at `facility-a/b/c`.
+  The reduced radial solver uses DIII-D-like, SPARC-like and TCV-like parameters.
+  An investigator asks separate facility-steward model contexts for evidence.
+  The gateway enforces prerequisites, a five-unit case allowance, cached
+  releases and the demo's gradient-based analogy rejection rule.
+- Replay evidence decisions, view released radial profiles and request products
+  manually in the browser. Import an earlier THERMAL `report.json` locally.
+- Explore independent `demo-a/b/c` toy cases. Local fitting ranks reduced heating
+  effectiveness against increased heat loss. These are not the same facilities
+  or model as the transport investigation above.
 - Validate a proposed power scaling with six short heat-balance rollouts under
   parameter perturbations. These are dimensionless toy simulations, **not TORAX**.
 - Call independently hosted analysis services over an authenticated HTTP API.
@@ -55,6 +68,19 @@ diagnostics, an interactive six-rollout validation chart, the hosted agent repor
 tool evidence, and runtime logs. The validation sandbox runs the actual local
 tools without an LLM and remains separate from the hosted agent's saved report.
 
+The main **Facility evidence** view has three explicitly labeled sources:
+
+- **Local rehearsal:** `Run local demonstration` runs a fixed sequence through
+  the real gateway, with no LLM. You can also request products individually.
+  Play/rewind only changes the view; it never resets disclosure budgets.
+- **Latest hosted agent run:** renders `request_evidence` results from the actual
+  agent audit. A pre-merge toy-only run correctly has no THERMAL events.
+- **Imported THERMAL report:** reads a local JSON file in the browser, without
+  uploading it. This is recorded evidence, not a new live investigation.
+
+Rehearsal ledgers live under `.dashboard/rehearsal/`. Agent/site ledgers use
+`FUSION_LEDGER_DIR` (default `.fusion-state/`). They are deliberately independent.
+
 **Run investigation** submits this AgentApp with the actual Flower CLI to
 `@marykor/personal`, using your existing `flwr login supergrid` session and model
 quota. It polls Flower for the run's status and logs. Each submission is an
@@ -81,13 +107,15 @@ uv run flwr build
 uv run python -m pytest tests
 ```
 
-The lockfile pins Flower 1.37.0. The FAB includes only the app package, README and
-license; experiment files, site configuration and credentials are not bundled.
+The lockfile pins Flower 1.37.0. The FAB includes the app's Python package, the
+public synthetic device-parameter snapshot, README and license. Experiment files,
+site configurations, profile fixtures, ledgers and credentials are not bundled.
 
 Try the domain tools without a model or API key:
 
 ```powershell
 uv run fusion-investigator demo
+uv run fusion-investigator tool request_evidence '{"site":"facility-a","kind":"context"}'
 uv run fusion-investigator --config sites.example.json sites
 uv run fusion-investigator --config sites.example.json tool list_studies '{"site":"repository"}'
 ```
@@ -165,6 +193,18 @@ its own processes when finished. An actual model run still needs a provider.
 
 ## Independently hosted sites
 
+For the merged transport investigation, serve a site-owned gateway:
+
+```powershell
+$env:FUSION_THERMAL_TOKEN = "SET_A_RANDOM_TOKEN_OF_AT_LEAST_24_CHARACTERS"
+$env:FUSION_LEDGER_DIR = ".fusion-state/facility-a"
+uv run fusion-investigator serve --site facility-a --port 8766 --token-env FUSION_THERMAL_TOKEN
+```
+
+`sites.remote.example.json` maps `facility-a` to that authenticated endpoint;
+its `request_evidence` and `evidence_history` calls use the same gateway rules as
+local execution. A steward's approval never overrides a gateway rejection.
+
 Run the same analysis adapter near a site's data. For a loopback demo:
 
 ```powershell
@@ -197,6 +237,27 @@ release policy. The service does not implement differential privacy or secure
 aggregation; a Flower workspace does not supply those guarantees by itself.
 
 ## Evidence and evaluation
+
+The primary thermal workflow keeps A's diagnosis unresolved: B's independent
+source audit suggests what A should measure; C fails an explicit gradient-based
+analogy criterion. This is a controlled scenario, not proof that subcritical
+gradients are universally unidentifiable in real plasmas. The source discrepancy
+and audit availability are scenario assumptions. Model constants are illustrative.
+
+SQLite accounting survives restarts when the operator retains the ledger path.
+Ephemeral SuperGrid workers do not guarantee cross-run persistence. Evidence IDs
+and cache keys include a fingerprint of the solver, device inputs and configured
+fixtures, so a changed simulation cannot reuse an old cached finding. Policy
+units are not differential privacy. Default sites share one process; separate
+steward contexts are not independent security domains.
+
+The optional `scripts/generate_thermal_fixtures.py` must run with the parent
+repository's TORAX environment, separately from the app. Its actuator fractions
+and TORAX 1.4.3 source-dictionary extraction have regression tests. No full TORAX
+fixture generation is claimed by this merge. Generated snapshots are excluded
+from the FAB; `FUSION_THERMAL_FIXTURES` selects a site-owned JSON file. Unverified
+steady-state snapshots are allowed to disclose context but the gateway blocks
+balance/source conclusions until that assumption is independently checked.
 
 The primary recorded endpoint is two consecutive eligible evaluations completing
 all steps with no limit violations and tracking error within tolerance. A separate

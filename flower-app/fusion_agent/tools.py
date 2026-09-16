@@ -25,6 +25,16 @@ TEXT = {"type": "string"}
 SCHEMAS = [
     schema("list_sites", "Discover configured sites and their supported analyses.", {}),
     schema(
+        "request_evidence",
+        "Ask a facility steward for an approved transport investigation product. "
+        "Context precedes balance; balance precedes source_check. A site gateway "
+        "enforces prerequisites, budgets and analogy rejection. No toy power testing.",
+        {
+            "site": TEXT,
+            "kind": {"type": "string", "enum": ["context", "balance", "source_check"]},
+        },
+    ),
+    schema(
         "list_studies",
         "List current cold-start studies at a repository site.",
         {"site": TEXT},
@@ -60,10 +70,11 @@ SCHEMAS = [
 
 
 class Toolbox:
-    def __init__(self, sites, max_calls=16):
+    def __init__(self, sites, max_calls=16, steward=None):
         self.sites, self.max_calls = sites, max_calls
         self.used = 0
         self.audit = []
+        self.steward = steward
 
     def execute(self, name: str, arguments: dict) -> dict:
         if self.used >= self.max_calls:
@@ -76,11 +87,14 @@ class Toolbox:
             if set(arguments) != set(spec["parameters"]["required"]):
                 raise ValueError("Tool argument names do not match its schema")
             for key, value in arguments.items():
-                kind = spec["parameters"]["properties"][key]["type"]
+                constraints = spec["parameters"]["properties"][key]
+                kind = constraints["type"]
                 if kind == "string" and (
                     not isinstance(value, str) or len(value) > 120
                 ):
                     raise ValueError("Invalid string argument")
+                if "enum" in constraints and value not in constraints["enum"]:
+                    raise ValueError("Unknown evidence product")
                 if kind in ("number", "integer"):
                     constraints = spec["parameters"]["properties"][key]
                     if (
@@ -99,7 +113,11 @@ class Toolbox:
                 site = self.sites.get(args.pop("site"))
                 if site is None:
                     raise ValueError("Site is not configured")
-                output = site.call(name, args)
+                output = (
+                    self.steward(site, args)
+                    if name == "request_evidence" and self.steward
+                    else site.call(name, args)
+                )
             # Fail closed on NaN and unexpected non-JSON adapter output.
             json.dumps(output, allow_nan=False)
         except (ValueError, TypeError, KeyError, OSError):

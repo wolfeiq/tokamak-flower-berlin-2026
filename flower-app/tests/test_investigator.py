@@ -319,7 +319,7 @@ def test_model_loop_executes_real_tools_and_forces_final_answer():
     )
     assert answer == "Synthetic evidence."
     assert len(requests) == 2
-    assert "tools" not in requests[-1]
+    assert requests[-1]["tool_choice"] == "none"
     output = json.loads(requests[-1]["input"][-1]["output"])
     assert output["ranked"][0]["efficiency"] == 0.7
     assert published[-1]["type"] == "response.completed"

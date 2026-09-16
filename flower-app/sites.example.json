@@ -1,5 +1,8 @@
 {
   "sites": [
+    {"id": "facility-a", "type": "thermal", "facility": "A"},
+    {"id": "facility-b", "type": "thermal", "facility": "B"},
+    {"id": "facility-c", "type": "thermal", "facility": "C"},
     {"id": "repository", "type": "checkpoint", "root": "../results/coldstart"},
     {"id": "demo-a", "type": "demo"},
     {"id": "demo-b", "type": "demo"},

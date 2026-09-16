@@ -445,10 +445,12 @@ wheels = [
 
 [[package]]
 name = "fusion-investigator"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "flwr" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "openai" },
 ]
 
@@ -461,6 +463,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "flwr", specifier = ">=1.37.0,<1.38" },
+    { name = "numpy", specifier = ">=2,<3" },
     { name = "openai", specifier = ">=2.16,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },

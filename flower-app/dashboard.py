@@ -51,7 +51,59 @@ class Dashboard:
             self.run = json.loads(path.read_text(encoding="utf-8"))
             if self.run["status"] in ("submitting", "pending", "starting", "running"):
                 self.run["status"] = "monitor interrupted"
-        self.sites = load_sites()
+        # Rehearsal state is separate from hosted-agent and remote facility ledgers.
+        self.sites = load_sites(ledger_dir=self.state_dir / "rehearsal")
+        self.thermal = {"mode": "local-rehearsal", "events": []}
+        trace_path = self.state_dir / "thermal.json"
+        if trace_path.exists():
+            self.thermal = json.loads(trace_path.read_text(encoding="utf-8"))
+
+    def thermal_snapshot(self):
+        with self.lock:
+            return json.loads(json.dumps(self.thermal))
+
+    def release(self, site, kind):
+        if site not in ("facility-a", "facility-b", "facility-c"):
+            raise ValueError("Select a configured thermal facility")
+        if kind not in ("context", "balance", "source_check", "raw_logs"):
+            raise ValueError("Unknown evidence product")
+        with self.lock:
+            result = self.sites[site].call("request_evidence", {"kind": kind})
+            if self.thermal.get("case_id") != result["case_id"]:
+                self.thermal = {
+                    "mode": "local-rehearsal",
+                    "case_id": result["case_id"],
+                    "events": [],
+                }
+            self.thermal["events"].append(result)
+            self.save_thermal()
+            return self.thermal_snapshot()
+
+    def save_thermal(self):
+        temporary = self.state_dir / "thermal.tmp"
+        temporary.write_text(
+            json.dumps(self.thermal, allow_nan=False), encoding="utf-8"
+        )
+        temporary.replace(self.state_dir / "thermal.json")
+
+    def replay(self):
+        # This fixed rehearsal makes no model calls. Budgets are never reset.
+        with self.lock:
+            self.thermal["events"] = []
+            for facility, kind in (
+                ("a", "context"),
+                ("a", "balance"),
+                ("b", "context"),
+                ("c", "context"),
+                ("c", "balance"),
+                ("b", "balance"),
+                ("b", "source_check"),
+                ("a", "source_check"),
+                ("b", "raw_logs"),
+                ("b", "source_check"),
+            ):
+                self.release("facility-" + facility, kind)
+            return self.thermal_snapshot()
 
     def update(self, **values):
         with self.lock:
@@ -202,6 +254,8 @@ def make_server(app, port=8787):
                 return
             if self.path == "/api/run":
                 self.send(app.snapshot())
+            elif self.path == "/api/thermal":
+                self.send(app.thermal_snapshot())
             elif self.path == "/api/evidence":
                 box = Toolbox(app.sites)
                 self.send(
@@ -212,14 +266,17 @@ def make_server(app, port=8787):
                                 {"site": site, "case_id": "heating-response"},
                             )
                             for site in app.sites
+                            if "diagnose_heating"
+                            in app.sites[site].describe()["capabilities"]
                         ]
                     }
                 )
-            elif self.path in ("/", "/app.js", "/style.css"):
+            elif self.path in ("/", "/app.js", "/thermal.js", "/style.css"):
                 name = "index.html" if self.path == "/" else self.path[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
+                    "thermal.js": "text/javascript",
                     "style.css": "text/css",
                 }[name]
                 self.send(
@@ -254,6 +311,10 @@ def make_server(app, port=8787):
                     raise TypeError("Expected a JSON object")
                 if self.path == "/api/run":
                     self.send(app.start(body.get("prompt")), 202)
+                elif self.path == "/api/release":
+                    self.send(app.release(body.get("site"), body.get("kind")))
+                elif self.path == "/api/replay":
+                    self.send(app.replay())
                 elif self.path == "/api/validate":
                     result = Toolbox(app.sites).execute(
                         "validate_heating",
