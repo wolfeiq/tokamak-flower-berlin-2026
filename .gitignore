@@ -16,3 +16,5 @@ results/figures_demo/
 # the plots and the raw gate JSON are reproduced by re-running the scripts.
 results/torax_plots/
 results/**/*.json
+
+.idea/
