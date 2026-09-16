@@ -221,23 +221,42 @@ class Dashboard:
                 self.active = False
 
 
+# The WebGL reactor assemblies are committed at the repository root; serve them
+# under /twin/ through an explicit allowlist only (missing files 404 harmlessly
+# in checkouts that do not carry the assets).
+TWIN_PAGES = {
+    f"/twin/{name}.html": ROOT.parent / "assets" / "3d" / "html" / f"{name}.html"
+    for name in ("iter_like", "sparc_like", "diiid_like", "tcv_like")
+}
+TWIN_PAGES = {k: v for k, v in TWIN_PAGES.items() if v.exists()}
+
+
 def make_server(app, port=8787):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
 
-        def send(self, data, status=200, content_type="application/json"):
+        def send(self, data, status=200, content_type="application/json", csp=None):
             payload = data if isinstance(data, bytes) else json.dumps(data).encode()
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(payload)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            # Default policy: no remote scripts, top page never framed. The
+            # only additions over the original are the deck's Google Fonts and
+            # permission to frame our own /twin/ pages.
             self.send_header(
                 "Content-Security-Policy",
-                "default-src 'self'; "
-                "script-src 'self'; style-src 'self'; "
-                "img-src 'self' data:; frame-ancestors 'none'",
+                csp
+                or (
+                    "default-src 'self'; "
+                    "script-src 'self'; "
+                    "style-src 'self' https://fonts.googleapis.com; "
+                    "font-src https://fonts.gstatic.com; "
+                    "img-src 'self' data:; "
+                    "frame-src 'self'; frame-ancestors 'none'"
+                ),
             )
             self.end_headers()
             self.wfile.write(payload)
@@ -271,12 +290,37 @@ def make_server(app, port=8787):
                         ]
                     }
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/style.css"):
+            elif self.path == "/api/devices":
+                self.send(
+                    json.loads(
+                        (
+                            ROOT / "fusion_agent" / "thermal" / "_devices.json"
+                        ).read_text()
+                    )
+                )
+            elif self.path in TWIN_PAGES:
+                # Fixed mapping, never the request path: the 3D assemblies live
+                # outside frontend/ and nothing else there may be reachable.
+                # These self-contained pages inline their scripts and pull
+                # three.js from pinned CDNs, and may be framed by us alone.
+                self.send(
+                    TWIN_PAGES[self.path].read_bytes(),
+                    content_type="text/html; charset=utf-8",
+                    csp=(
+                        "default-src 'none'; "
+                        "script-src 'unsafe-inline' "
+                        "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                        "style-src 'unsafe-inline'; img-src data: blob:; "
+                        "connect-src 'self'; frame-ancestors 'self'"
+                    ),
+                )
+            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/style.css"):
                 name = "index.html" if self.path == "/" else self.path[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
                     "thermal.js": "text/javascript",
+                    "physics.js": "text/javascript",
                     "style.css": "text/css",
                 }[name]
                 self.send(

@@ -63,10 +63,10 @@ async function refreshRun() {
 function renderChart(result) {
   const maximum=Math.max(...result.baseline.map(x=>x.mean_tracking_error),...result.candidate.map(x=>x.mean_tracking_error),.01)*1.25;
   let svg=''; const top=18,bottom=190,height=bottom-top;
-  for(let i=0;i<=4;i++){const y=bottom-height*i/4;svg+=`<line x1="39" x2="563" y1="${y}" y2="${y}" stroke="#34402f" stroke-dasharray="3 5"/><text x="31" y="${y+3}" fill="#8b9c81" font-size="9" text-anchor="end">${(maximum*i/4).toFixed(2)}</text>`;}
+  for(let i=0;i<=4;i++){const y=bottom-height*i/4;svg+=`<line x1="39" x2="563" y1="${y}" y2="${y}" stroke="#23262B" stroke-dasharray="3 5"/><text x="31" y="${y+3}" fill="#5C6068" font-size="9" text-anchor="end">${(maximum*i/4).toFixed(2)}</text>`;}
   result.baseline.forEach((b,i)=>{
     const center=128+i*174;
-    [b,result.candidate[i]].forEach((v,j)=>{const h=v.mean_tracking_error/maximum*height;const x=center+(j===0?-38:5);svg+=`<rect x="${x}" y="${bottom-h}" width="32" height="${Math.max(h,.6)}" rx="3" fill="${j?'#c2f59d':'#64755b'}"/><text x="${x+16}" y="${bottom-h-7}" fill="${j?'#c2f59d':'#98ab8e'}" font-size="10" text-anchor="middle">${v.mean_tracking_error.toFixed(3)}</text>`;});
+    [b,result.candidate[i]].forEach((v,j)=>{const h=v.mean_tracking_error/maximum*height;const x=center+(j===0?-38:5);svg+=`<rect x="${x}" y="${bottom-h}" width="32" height="${Math.max(h,.6)}" rx="0" fill="${j?'#FF5A36':'#3A3E45'}"/><text x="${x+16}" y="${bottom-h-7}" fill="${j?'#FF5A36':'#9A9DA3'}" font-size="10" text-anchor="middle">${v.mean_tracking_error.toFixed(3)}</text>`;});
   });
   $('chart').innerHTML=svg;
   const improved=result.candidate.filter((v,i)=>v.mean_tracking_error<result.baseline[i].mean_tracking_error && v.limit_exceedances===0).length;
