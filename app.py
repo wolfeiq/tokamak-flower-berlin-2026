@@ -602,7 +602,6 @@ def render_digital_twin() -> None:
 # ---------------------------------------------------------------------------
 
 with st.sidebar:
-    st.image("https://flower.ai/images/flower-logo.svg", width=180)
     st.markdown("### **Tokamak Federation**")
     st.markdown("`tokamak-flower-berlin-2026`")
     st.markdown("---")
