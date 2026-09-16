@@ -20,7 +20,9 @@ fusion-investigator = "fusion_agent.cli:main"
 packages = ["fusion_agent"]
 
 [tool.flwr.app]
-publisher = "local"
+# Must match the Flower account that publishes to the Hub; "local" builds a
+# FAB that runs anywhere but cannot be published.
+publisher = "seroj"
 display-name = "Fusion Investigator"
 fab-format-version = 1
 flwr-version-target = "1.37.0"

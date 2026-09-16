@@ -38,9 +38,18 @@
   </div>
 </section>
 
+<section class="slide stage" id="s-atlas">
+  <div class="slide-inner">
+    <div class="kicker">02 · THE FEDERATION</div>
+    <div class="heading-row"><h2>Four machines. One aggregation round.</h2><button id="atlas-load" class="text-button">Load federation atlas →</button></div>
+    <iframe id="atlas-frame" class="twin-full" title="Interactive federation atlas" hidden loading="lazy"></iframe>
+    <p class="twin-note">Every weight in the scene is computed by the repository's own FedBuffServer, not drawn by the visualiser — role-matched channels, similarity weighting in (ρ*, ν*, β, q) space, staleness discount.</p>
+  </div>
+</section>
+
 <section class="slide" id="s-network">
   <div class="slide-inner">
-    <div class="kicker">02 · THE EVIDENCE NETWORK</div>
+    <div class="kicker">03 · THE EVIDENCE NETWORK</div>
     <div class="heading-row"><h2>Three machines. One question.</h2><span class="pill" id="thermal-mode">Local rehearsal · no LLM</span></div>
     <div class="panel thermal-controls">
       <div><label for="thermal-source">EVIDENCE SOURCE</label><select id="thermal-source"><option value="local">Local rehearsal · no LLM</option><option value="hosted">Latest hosted agent run</option><option value="imported">Imported THERMAL report</option></select></div>
@@ -55,7 +64,7 @@
 
 <section class="slide" id="s-boundary">
   <div class="slide-inner">
-    <div class="kicker">03 · BOUNDARY DECISIONS</div>
+    <div class="kicker">04 · BOUNDARY DECISIONS</div>
     <h2>What crossed. What was refused.</h2>
     <div class="thermal-grid">
       <article class="panel"><div class="panel-title"><h3>Released radial profiles</h3><span class="pill">Coarsened summaries</span></div><p class="muted small">Normalised temperature versus normalised minor radius. Spatial profiles, not time traces.</p><svg id="thermal-chart" viewBox="0 0 560 230" role="img" aria-label="Released radial temperature profiles"></svg><p id="thermal-legend" class="small muted">No profile has been released.</p><p class="footnote">A partner's audit can suggest a measurement. It cannot establish the cause at another facility.</p></article>
@@ -66,7 +75,7 @@
 
 <section class="slide" id="physics">
   <div class="slide-inner">
-    <div class="kicker">04 · RUN THE PHYSICS YOURSELF</div>
+    <div class="kicker">05 · RUN THE PHYSICS YOURSELF</div>
     <div class="heading-row"><h2>The simulation, inside the simulation.</h2><span class="pill">Reduced 1-D model · in-browser · not TORAX</span></div>
     <div class="physics-grid">
       <div class="controls">
@@ -96,9 +105,9 @@
   </div>
 </section>
 
-<section class="slide" id="s-twin">
+<section class="slide stage" id="s-twin">
   <div class="slide-inner">
-    <div class="kicker">05 · DIGITAL TWIN</div>
+    <div class="kicker">06 · DIGITAL TWIN</div>
     <div class="heading-row"><h2>The machine itself.</h2><button id="twin-load" class="text-button">Load 3D reactor assembly →</button></div>
     <iframe id="twin-frame" class="twin-full" title="Interactive 3D tokamak assembly" hidden loading="lazy"></iframe>
     <p class="twin-note">WebGL assembly of the facility selected on the physics slide — plasma core, vacuum vessel cutaway, TF coils, central solenoid. Generated from the same registry parameters as the transport solve.</p>
@@ -107,7 +116,7 @@
 
 <section class="slide" id="s-sandbox">
   <div class="slide-inner">
-    <div class="kicker">06 · SEPARATE TOY SANDBOX</div>
+    <div class="kicker">07 · SEPARATE TOY SANDBOX</div>
     <div class="heading-row"><h2>Challenge a candidate.</h2><span class="muted small">demo-a/b/c are independent of the THERMAL facilities</span></div>
     <div id="site-cards" class="site-grid"><p>Loading toy evidence…</p></div>
     <div class="panel validation"><div class="validation-grid"><div class="controls"><p class="muted">Run the actual toy validation tool against baseline across three parameter perturbations.</p><label for="site-select">REQUESTING SITE</label><select id="site-select"><option value="demo-a">Demo A · requesting facility</option><option value="demo-b">Demo B · partner facility</option><option value="demo-c">Demo C · partner facility</option></select><div class="range-label"><label for="power">HEATING POWER SCALE</label><output id="power-value" for="power">1.43×</output></div><input id="power" type="range" min="0.5" max="1.5" step="0.01" value="1.43"><div class="range-ticks"><span>0.50×</span><span>Baseline 1.00×</span><span>1.50×</span></div><button id="validate-button" class="secondary">Validate candidate →</button><p class="small muted">6 toy rollouts · 60 steps each · 0 physical shots</p><div id="validation-error" class="error" role="alert" hidden></div></div><div class="chart-area"><div class="chart-header"><span>Mean tracking error <small>↓ lower is better</small></span><div class="legend"><span class="baseline-key"></span>Baseline<span class="candidate-key"></span>Candidate</div></div><svg id="chart" viewBox="0 0 570 215" role="img" aria-label="Tracking error by model uncertainty scenario"></svg><div class="chart-labels"><span>Lower effectiveness</span><span>Fitted model</span><span>Higher effectiveness</span></div><div id="verdict" class="verdict" role="status">Computing validation…</div></div></div><p class="footnote">Model sensitivity only. A passing candidate does not authorize deployment or prove physical transfer.</p></div>
@@ -116,7 +125,7 @@
 
 <section class="slide" id="s-report">
   <div class="slide-inner">
-    <div class="kicker">07 · AGENT REPORT</div>
+    <div class="kicker">08 · AGENT REPORT</div>
     <div class="heading-row"><h2>The advisory, verbatim.</h2><div class="report-actions"><button id="copy-report" class="text-button">Copy report</button><a class="quiet-link" id="flower-link" target="_blank" rel="noopener" href="https://flower.ai">Open in Flower ↗</a></div></div>
     <div class="report-meta"><span class="status-dot"></span> Actual hosted agent output <span>·</span> kept separate from the interactive rehearsals</div>
     <div class="report-scroll">

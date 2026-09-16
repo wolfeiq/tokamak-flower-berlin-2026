@@ -229,12 +229,59 @@ class Dashboard:
                 self.active = False
 
 
+# The federation atlas is generated from the repo's own FedBuffServer round
+# (viz/), not drawn by hand. Built once on first request and cached: the
+# aggregation round costs a second and the scene never changes within a run.
+_ATLAS = {}
+
+
+def atlas_html(target="iter_like"):
+    """Render the federation atlas, or a readable reason it is unavailable.
+
+    The viz package lives at the repository root and needs scipy; a checkout
+    of flower-app alone will not have it. Failing with a sentence beats an
+    exception mid-presentation.
+    """
+    if target in _ATLAS:
+        return _ATLAS[target]
+    root = str(ROOT.parent)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    try:
+        import viz.federation_data as fd
+        from viz.federation_scene import build_scene_html
+
+        graph = fd.build_graph(target=target)
+        html = build_scene_html(
+            fd.scene_payload(graph, participation=fd.participation_sweep(graph))
+        )
+    except Exception as exc:  # noqa: BLE001 - surfaced to the page, not swallowed
+        html = (
+            "<!doctype html><meta charset='utf-8'>"
+            "<body style=\"margin:0;display:grid;place-items:center;height:100vh;"
+            "background:#08090B;color:#9A9DA3;font:12px ui-monospace,monospace\">"
+            f"Federation atlas unavailable: {type(exc).__name__}: {exc}</body>"
+        )
+    _ATLAS[target] = html.encode("utf-8")
+    return _ATLAS[target]
+
+
 # The WebGL reactor assemblies are committed at the repository root; serve them
 # under /twin/ through an explicit allowlist only (missing files 404 harmlessly
 # in checkouts that do not carry the assets).
+TWIN_DEVICES = ("iter_like", "sparc_like", "diiid_like", "tcv_like")
+# Self-contained three.js scenes: inline scripts plus two pinned CDNs, and
+# frameable by this origin alone.
+TWIN_CSP = (
+    "default-src 'none'; "
+    "script-src 'unsafe-inline' "
+    "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+    "style-src 'unsafe-inline'; img-src data: blob:; "
+    "connect-src 'self'; frame-ancestors 'self'"
+)
 TWIN_PAGES = {
     f"/twin/{name}.html": ROOT.parent / "assets" / "3d" / "html" / f"{name}.html"
-    for name in ("iter_like", "sparc_like", "diiid_like", "tcv_like")
+    for name in TWIN_DEVICES
 }
 TWIN_PAGES = {k: v for k, v in TWIN_PAGES.items() if v.exists()}
 
@@ -279,11 +326,14 @@ def make_server(app, port=8787):
             if not self.valid_host():
                 self.send({"error": "Invalid host"}, 403)
                 return
-            if self.path == "/api/run":
+            # A query string must not change which resource is served: "/?v=2"
+            # is the page, not a 404. Only /atlas reads a parameter.
+            route, _, query = self.path.partition("?")
+            if route == "/api/run":
                 self.send(app.snapshot())
-            elif self.path == "/api/thermal":
+            elif route == "/api/thermal":
                 self.send(app.thermal_snapshot())
-            elif self.path == "/api/evidence":
+            elif route == "/api/evidence":
                 box = Toolbox(app.sites)
                 self.send(
                     {
@@ -298,7 +348,7 @@ def make_server(app, port=8787):
                         ]
                     }
                 )
-            elif self.path == "/api/devices":
+            elif route == "/api/devices":
                 self.send(
                     json.loads(
                         (
@@ -306,24 +356,25 @@ def make_server(app, port=8787):
                         ).read_text()
                     )
                 )
-            elif self.path in TWIN_PAGES:
+            elif route.startswith("/atlas"):
+                device = query.partition("device=")[2].partition("&")[0]
+                self.send(
+                    atlas_html(device if device in TWIN_DEVICES else "iter_like"),
+                    content_type="text/html; charset=utf-8",
+                    csp=TWIN_CSP,
+                )
+            elif route in TWIN_PAGES:
                 # Fixed mapping, never the request path: the 3D assemblies live
                 # outside frontend/ and nothing else there may be reachable.
                 # These self-contained pages inline their scripts and pull
                 # three.js from pinned CDNs, and may be framed by us alone.
                 self.send(
-                    TWIN_PAGES[self.path].read_bytes(),
+                    TWIN_PAGES[route].read_bytes(),
                     content_type="text/html; charset=utf-8",
-                    csp=(
-                        "default-src 'none'; "
-                        "script-src 'unsafe-inline' "
-                        "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
-                        "style-src 'unsafe-inline'; img-src data: blob:; "
-                        "connect-src 'self'; frame-ancestors 'self'"
-                    ),
+                    csp=TWIN_CSP,
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/deck.js", "/style.css"):
-                name = "index.html" if self.path == "/" else self.path[1:]
+            elif route in ("/", "/app.js", "/thermal.js", "/physics.js", "/deck.js", "/style.css"):
+                name = "index.html" if route == "/" else route[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",

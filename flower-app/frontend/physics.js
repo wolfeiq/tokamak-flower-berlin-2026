@@ -132,6 +132,13 @@ async function init() {
     $('physics-assumed-value').textContent = '×' + state.assumed.toFixed(2);
     render();
   });
+  const atlasButton = $('atlas-load');
+  if (atlasButton) atlasButton.addEventListener('click', () => {
+    const frame = $('atlas-frame');
+    // Built on demand: the aggregation round behind it costs about a second.
+    frame.src = '/atlas?device=' + devices[state.site].name;
+    frame.hidden = false; atlasButton.hidden = true;
+  });
   const twinButton = $('twin-load');
   if (twinButton) twinButton.addEventListener('click', () => {
     const twin = $('twin-frame');

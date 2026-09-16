@@ -67,7 +67,13 @@ h3{font-size:15px;font-weight:500;letter-spacing:-.01em;margin:0}
 .orbital{width:240px;margin:18px 0 8px}
 .orbital svg{display:block;width:100%}
 .orbital ellipse{stroke-width:.8;opacity:.55}
-.twin-full{flex:1;min-height:0;width:100%;border:1px solid var(--border);background:var(--bg)}
+.twin-full{flex:1;min-height:420px;width:100%;border:1px solid var(--border);background:var(--bg)}
+/* Stage slides hand almost the whole viewport to the visual: these scenes are
+   laid out for ~720px and collapse into a flat label overlay when starved. */
+.slide.stage{padding-top:clamp(44px,6vh,64px);padding-bottom:clamp(44px,6vh,64px)}
+.slide.stage .slide-inner{gap:10px;overflow:hidden}
+.slide.stage h2{font-size:clamp(20px,2.2vw,32px);max-width:none}
+.slide.stage .kicker{font-size:11px}
 .twin-note{font-family:var(--mono);font-size:9px;color:var(--faint);margin:0}
 .report-scroll{flex:1;min-height:0;overflow:auto;padding-right:8px;scrollbar-width:thin}
 /* ---------- panels ---------- */
