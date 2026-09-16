@@ -16,3 +16,9 @@ results/figures_demo/
 # the plots and the raw gate JSON are reproduced by re-running the scripts.
 results/torax_plots/
 results/**/*.json
+
+# Thermal investigation: generated bundle source, private ledger and demo output
+apps/thermal-investigation/thermal_investigation/_closure.py
+apps/thermal-investigation/investigation-output/
+apps/thermal-investigation/investigation-state/
+*.fab

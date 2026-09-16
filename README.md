@@ -249,3 +249,10 @@ build our own environment because its abstractions are single-agent and
 ITER-hybrid-shaped, but it got those two details right and we copy them.
 
 TORAX is Apache-2.0, Google DeepMind ([arXiv:2406.06718](https://arxiv.org/abs/2406.06718)).
+
+## Cross-facility thermal investigation (Flower AgentApp)
+
+The [companion investigation demo](apps/thermal-investigation/README.md) wraps the
+existing power-balance estimator in bounded Flower agent tool loops. It includes
+facility-controlled releases, persistent policy budgets, a browser replay dashboard
+and disclosure-boundary tests. Initial cases are synthetic; RL controllers are unchanged.

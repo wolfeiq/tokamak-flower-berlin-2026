@@ -1,0 +1,36 @@
+[project]
+name = "thermal-investigation"
+version = "0.1.0"
+license = { file = "LICENSE" }
+description = "Bounded cross-facility thermal anomaly investigation"
+requires-python = ">=3.12"
+dependencies = ["flwr>=1.37.0,<1.38", "openai>=2.16,<3", "numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["thermal_investigation*"]
+
+[tool.setuptools.package-data]
+thermal_investigation = ["dashboard.html"]
+
+[tool.flwr.app]
+publisher = "local"
+fab-format-version = 1
+flwr-version-target = "1.37.0"
+fab-include = ["thermal_investigation/**/*.py", "README.md", "LICENSE"]
+
+[tool.flwr.app.components]
+agentapp = "thermal_investigation.agent_app:app"
+
+[tool.flwr.app.config]
+model = "openai/gpt-5.6-sol"
+output-dir = "investigation-output"
+
+[tool.flwr.app.config.agent]
+input = "Investigate facility A's weak thermal response. Consult B and C, check analogies, and recommend the next useful evidence. Do not assert a confirmed diagnosis."
