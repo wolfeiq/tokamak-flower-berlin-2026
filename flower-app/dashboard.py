@@ -276,14 +276,16 @@ def make_server(app, port=8787):
             }
 
         def do_GET(self):
+            # Query strings do not change the allowlisted resource path.
+            route = self.path.partition("?")[0]
             if not self.valid_host():
                 self.send({"error": "Invalid host"}, 403)
                 return
-            if self.path == "/api/run":
+            if route == "/api/run":
                 self.send(app.snapshot())
-            elif self.path == "/api/thermal":
+            elif route == "/api/thermal":
                 self.send(app.thermal_snapshot())
-            elif self.path == "/api/evidence":
+            elif route == "/api/evidence":
                 box = Toolbox(app.sites)
                 self.send(
                     {
@@ -298,7 +300,7 @@ def make_server(app, port=8787):
                         ]
                     }
                 )
-            elif self.path == "/api/devices":
+            elif route == "/api/devices":
                 self.send(
                     json.loads(
                         (
@@ -306,13 +308,13 @@ def make_server(app, port=8787):
                         ).read_text()
                     )
                 )
-            elif self.path in TWIN_PAGES:
+            elif route in TWIN_PAGES:
                 # Fixed mapping, never the request path: the 3D assemblies live
                 # outside frontend/ and nothing else there may be reachable.
                 # These self-contained pages inline their scripts and pull
                 # three.js from pinned CDNs, and may be framed by us alone.
                 self.send(
-                    TWIN_PAGES[self.path].read_text(encoding="utf-8").replace(
+                    TWIN_PAGES[route].read_text(encoding="utf-8").replace(
                         "</body>", '<script src="/twin-selector.js"></script></body>'
                     ).encode("utf-8"),
                     content_type="text/html; charset=utf-8",
@@ -324,8 +326,8 @@ def make_server(app, port=8787):
                         "connect-src 'self'; frame-ancestors 'self'"
                     ),
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/twin-selector.js", "/style.css"):
-                name = "index.html" if self.path == "/" else self.path[1:]
+            elif route in ("/", "/app.js", "/thermal.js", "/physics.js", "/twin-selector.js", "/style.css"):
+                name = "index.html" if route == "/" else route[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
@@ -342,9 +344,10 @@ def make_server(app, port=8787):
                 self.send({"error": "Not found"}, 404)
 
         def do_HEAD(self):
+            route = self.path.partition("?")[0]
             # Availability check for the fixed reactor asset set; never reads a
             # user-supplied filesystem path or executes a tool.
-            status = 403 if not self.valid_host() else 200 if self.path in TWIN_PAGES else 404
+            status = 403 if not self.valid_host() else 200 if route in TWIN_PAGES else 404
             self.send_response(status)
             self.send_header("Content-Length", "0")
             self.end_headers()

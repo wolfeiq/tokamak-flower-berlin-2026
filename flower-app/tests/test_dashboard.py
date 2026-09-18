@@ -193,3 +193,19 @@ def test_rehearsal_replay_and_manual_disclosure_use_real_gateway(dashboard):
     assert not app.active  # Rehearsal cannot launch a hosted run.
     restored = Dashboard(app.state_dir)
     assert restored.thermal_snapshot() == second
+
+
+def test_query_strings_preserve_allowlisted_routes(dashboard, tmp_path, monkeypatch):
+    app, base = dashboard
+    geometry = tmp_path / "device.html"
+    geometry.write_text("<html><body>Test assembly</body></html>", encoding="utf-8")
+    monkeypatch.setattr(dashboard_module, "TWIN_PAGES", {"/twin/diiid_like.html": geometry})
+    for path in ("/?v=2", "/thermal.js?v=2", "/api/run?v=2", "/twin/diiid_like.html?v=2"):
+        with urlopen(base + path) as response:
+            assert response.status == 200
+    with urlopen(Request(base + "/twin/diiid_like.html?v=2", method="HEAD")) as response:
+        assert response.status == 200
+    with pytest.raises(HTTPError) as error:
+        urlopen(base + "/unknown?v=2")
+    assert error.value.code == 404
+    assert not app.active
