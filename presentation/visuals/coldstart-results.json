@@ -1,0 +1,53 @@
+{
+  "study": "20260916-065401_6df3978",
+  "analysis": "Selection excluded from confirmation; all local shots charged",
+  "results": {
+    "sparc_like": {
+      "scratch": {
+        "0": 21,
+        "1": 11,
+        "2": 26,
+        "3": 36,
+        "4": 26,
+        "5": 11
+      },
+      "federated_uniform": {
+        "0": 16,
+        "1": 16,
+        "2": 16,
+        "3": 36,
+        "4": 26,
+        "5": 16
+      }
+    },
+    "tcv_like": {
+      "scratch": {
+        "0": 51,
+        "1": 11,
+        "2": 11,
+        "3": 21,
+        "4": 16,
+        "5": 11
+      },
+      "federated_uniform": {
+        "0": 56,
+        "1": 16,
+        "2": 16,
+        "3": 21,
+        "4": 21,
+        "5": 16
+      }
+    }
+  },
+  "sparc_medians": [
+    23.5,
+    16.0
+  ],
+  "paired_faster_tied_slower": [
+    2,
+    2,
+    2
+  ],
+  "median_reduction_percent": 31.914893617021278,
+  "uniform_source_training_shots": 240
+}

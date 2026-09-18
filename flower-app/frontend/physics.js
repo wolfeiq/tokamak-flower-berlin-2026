@@ -97,7 +97,7 @@ async function init() {
   try { devices = await (await fetch('/api/devices')).json(); }
   catch { document.getElementById('physics-verdict').textContent = 'Device parameters unavailable. Reload to retry.'; return; }
   const $ = id => document.getElementById(id);
-  const state = { site: 'A', power: 1.0, assumed: 1.6 };
+  const state = { site: $('physics-site').value, power: 1.0, assumed: 1.6 };
   function render() {
     const dev = devices[state.site];
     const run = solve(dev, state.power);

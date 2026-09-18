@@ -13,10 +13,15 @@ def make_server(port=8788):
         "/deck.js": (ROOT / "deck.js", "text/javascript"),
         "/style.css": (ROOT / "style.css", "text/css"),
     }
-    pages.update({
-        f"/visuals/{path.name}": (path, "text/html")
-        for path in (ROOT / "visuals").glob("*.html")
-    })
+    for pattern, mime in (
+        ("*.html", "text/html"),
+        ("*.png", "image/png"),
+        ("*.svg", "image/svg+xml"),
+    ):
+        pages.update({
+            f"/visuals/{path.name}": (path, mime)
+            for path in (ROOT / "visuals").glob(pattern)
+        })
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):

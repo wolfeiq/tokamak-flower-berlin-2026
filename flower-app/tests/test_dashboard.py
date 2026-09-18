@@ -84,6 +84,26 @@ def test_invalid_requests_and_cross_origin_cannot_launch(dashboard):
         urlopen(base + "/../.dashboard/run.json")
 
 
+def test_device_selector_serves_only_allowlisted_geometry(dashboard, tmp_path, monkeypatch):
+    app, base = dashboard
+    geometry = tmp_path / "device.html"
+    geometry.write_text("<html><body>Test assembly</body></html>", encoding="utf-8")
+    monkeypatch.setattr(dashboard_module, "TWIN_PAGES", {"/twin/diiid_like.html": geometry})
+    with urlopen(Request(base + "/twin/diiid_like.html", method="HEAD")) as response:
+        assert response.status == 200
+        assert response.read() == b""
+    with urlopen(base + "/twin/diiid_like.html") as response:
+        assert b'<script src="/twin-selector.js"></script>' in response.read()
+        assert "frame-ancestors 'self'" in response.headers["Content-Security-Policy"]
+    with urlopen(base + "/twin-selector.js") as response:
+        assert response.headers["Content-Type"].startswith("text/javascript")
+    for path in ("/twin/unknown.html", "/twin/../dashboard.py"):
+        with pytest.raises(HTTPError) as error:
+            urlopen(Request(base + path, method="HEAD"))
+        assert error.value.code == 404
+    assert not app.active
+
+
 def test_worker_uses_flower_and_preserves_multiline_prompt(tmp_path):
     import tomllib
 

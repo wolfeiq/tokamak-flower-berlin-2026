@@ -50,11 +50,14 @@
   
     .legend-overlay { top: 12px; bottom: auto; right: 12px; font-size: 9px; flex-wrap: wrap; gap: 6px; }
     .controls-overlay { max-width: 100%; }
+    .hero .legend-overlay, .hero .controls-overlay { display: none; }
     </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
-</head>
+
+    <script>if (location.hash === '#hero') document.documentElement.classList.add('hero');</script>
+    </head>
 <body>
   <div id="canvas-container"></div>
   <div id="loading">Rendering Tokamak Reactor Geometry...</div>
@@ -340,6 +343,29 @@
         plasmaMaterial.emissiveIntensity = 0.35 * pulse;
       }
       renderer.render(scene, camera);
+    }
+
+    if (location.hash === '#hero') {
+      scene.background.setHex(0x08090b);
+      gridHelper.visible = false;
+      keyLight.color.setHex(0xacc8ff);
+      fillLight.color.setHex(0xff9e74);
+      plasmaMaterial.color.setHex(0xff7755);
+      plasmaMaterial.emissive.setHex(0xff7755);
+      plasmaLight.color.setHex(0xff7755);
+      controls.enablePan = false;
+      controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      controls.autoRotateSpeed = 0.24;
+      function frameHero() {
+        const w = innerWidth, h = innerHeight, narrow = w <= 850;
+        camera.position.set(200, 190, 520).multiplyScalar(
+          (narrow ? 1.30 : 1.14) / Math.min(1, w / h));
+        camera.setViewOffset(w, h, narrow ? -w * 0.06 : -w * 0.23,
+          narrow ? -h * 0.17 : 0, w, h);
+        camera.updateProjectionMatrix();
+      }
+      frameHero();
+      addEventListener('resize', frameHero);
     }
     animate();
   </script>

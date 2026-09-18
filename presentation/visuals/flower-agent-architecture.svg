@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" role="img" aria-labelledby="title desc">
+<title id="title">Flower LLM investigation architecture</title>
+<desc id="desc">The research interface starts a Flower AgentApp run. An investigator asks three facility stewards for evidence. Each steward calls a deterministic disclosure gateway that checks release policy and runs local analysis. Approved findings return to the investigator for an advisory report and audit trail.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto-start-reverse"><path d="M0 0L9 4.5L0 9" fill="#586470"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#17232d}.title{font-size:24px;font-weight:700}.heading{font-size:19px;font-weight:700}.body{font-size:15px}.small{font-size:13px;fill:#56616d}.line{fill:none;stroke:#586470;stroke-width:2;marker-end:url(#arrow)}.return{fill:none;stroke:#2e8b3d;stroke-width:2;stroke-dasharray:6 5;marker-end:url(#arrow)}.built{fill:#ecf7ed;stroke:#2e8b3d;stroke-width:2}.runtime{fill:#eaf0f8;stroke:#3d6ba5;stroke-width:2}.tool{fill:#fdf4e5;stroke:#d98a1f;stroke-width:2}</style>
+<rect width="960" height="700" fill="#fff"/>
+<text x="480" y="35" text-anchor="middle" class="title">Flower LLM investigation architecture</text>
+<text x="480" y="60" text-anchor="middle" class="small">Between-experiment advice · synthetic facilities in the default app</text>
+
+<rect x="250" y="86" width="460" height="74" rx="10" class="runtime"/>
+<text x="480" y="115" text-anchor="middle" class="heading">Flower AgentApp runtime</text>
+<text x="480" y="139" text-anchor="middle" class="body">Model bridge · run execution · retained run state</text>
+<path d="M480 160V191" class="line"/>
+
+<rect x="28" y="200" width="218" height="83" rx="10" class="built"/>
+<text x="137" y="232" text-anchor="middle" class="heading">Research interface</text>
+<text x="137" y="258" text-anchor="middle" class="body">Investigation brief</text>
+<path d="M246 242H306" class="line"/>
+<rect x="316" y="200" width="328" height="83" rx="10" class="built"/>
+<text x="480" y="231" text-anchor="middle" class="heading">Investigator agent</text>
+<text x="480" y="256" text-anchor="middle" class="body">Select evidence requests · compare findings</text>
+<path d="M644 242H705" class="line"/>
+<rect x="715" y="200" width="217" height="83" rx="10" class="built"/>
+<text x="823" y="232" text-anchor="middle" class="heading">Advisory report</text>
+<text x="823" y="258" text-anchor="middle" class="body">Next check + evidence trail</text>
+
+<path d="M480 283V318H168V350M480 318V350M480 318H792V350" class="line"/>
+<text x="487" y="306" class="small">evidence requests</text>
+
+<rect x="28" y="350" width="280" height="76" rx="10" class="built"/>
+<rect x="340" y="350" width="280" height="76" rx="10" class="built"/>
+<rect x="652" y="350" width="280" height="76" rx="10" class="built"/>
+<text x="168" y="380" text-anchor="middle" class="heading">Facility A steward</text>
+<text x="480" y="380" text-anchor="middle" class="heading">Facility B steward</text>
+<text x="792" y="380" text-anchor="middle" class="heading">Facility C steward</text>
+<text x="168" y="404" text-anchor="middle" class="body">Separate model context</text>
+<text x="480" y="404" text-anchor="middle" class="body">Separate model context</text>
+<text x="792" y="404" text-anchor="middle" class="body">Separate model context</text>
+<path d="M168 426V459M480 426V459M792 426V459" class="line"/>
+
+<rect x="28" y="468" width="280" height="81" rx="10" class="tool"/>
+<rect x="340" y="468" width="280" height="81" rx="10" class="tool"/>
+<rect x="652" y="468" width="280" height="81" rx="10" class="tool"/>
+<text x="168" y="497" text-anchor="middle" class="heading">Disclosure gateway</text>
+<text x="480" y="497" text-anchor="middle" class="heading">Disclosure gateway</text>
+<text x="792" y="497" text-anchor="middle" class="heading">Disclosure gateway</text>
+<text x="168" y="523" text-anchor="middle" class="body">Release policy · allowance · cache</text>
+<text x="480" y="523" text-anchor="middle" class="body">Release policy · allowance · cache</text>
+<text x="792" y="523" text-anchor="middle" class="body">Release policy · allowance · cache</text>
+<path d="M168 549V580M480 549V580M792 549V580" class="line"/>
+
+<rect x="28" y="589" width="280" height="55" rx="10" class="runtime"/>
+<rect x="340" y="589" width="280" height="55" rx="10" class="runtime"/>
+<rect x="652" y="589" width="280" height="55" rx="10" class="runtime"/>
+<text x="168" y="622" text-anchor="middle" class="body">Site analysis + local evidence</text>
+<text x="480" y="622" text-anchor="middle" class="body">Site analysis + local evidence</text>
+<text x="792" y="622" text-anchor="middle" class="body">Site analysis + local evidence</text>
+
+<path d="M308 500H324V294H335V282" class="return"/>
+<text x="32" y="333" class="small" fill="#2e8b3d">Approved findings return to the investigator</text>
+<text x="480" y="679" text-anchor="middle" class="body">Shared payload: bounded findings · Output: advice for a researcher · No actuation</text>
+</svg>

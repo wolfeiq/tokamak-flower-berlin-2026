@@ -1,120 +1,124 @@
 # Speaker script
 
-## Block 1 — Flower LLM investigation agents
-
-### Opening
+## Slide 1 — Tokamak collaboration
 
 Our project explores collaboration between tokamak facilities in two ways:
 sharing evidence for an investigation, and sharing learned policies for control
-research. I will start with the Flower LLM-agent application.
+research. We built a Flower LLM-agent application alongside a control study
+using TORAX, Google DeepMind's tokamak transport simulator.
 
-### The problem — show the 3D reactor assembly
+The opening model is illustrative geometry. The physics experiments are separate.
 
-Imagine a tokamak's plasma is colder than expected. Was less heating power
-delivered? Did heat transport increase? Or is a measurement misleading us?
-These explanations can look similar but lead to different decisions.
+## Slide 2 — The problem
 
-The 3D view helps us locate the discussion in a machine. It is illustrative
-geometry; the plasma physics comes from separate models. Our question here is:
-can experience from another facility help us choose the next independent
-measurement?
+Each machine has limited local experience, and experience from another tokamak
+does not automatically transfer. Geometry, diagnostics and operating regimes differ.
 
-### Research background — Princeton and cross-device transfer
+Imagine a plasma is colder than expected. Was less heating power delivered,
+did heat transport increase, or is a measurement misleading us? Similar-looking
+observations can require different decisions.
 
-AI already has experimental results in fusion. Princeton-led researchers
-demonstrated a reinforcement-learning controller on DIII-D that reduced the
-likelihood of tearing instabilities while maintaining high-performance plasma
-operation. PACMAN provides an architecture for integrating machine-learning
-predictors and controllers into DIII-D, from diagnostic processing to actuation.
+Meanwhile, independently operated facilities may need to retain control over
+their records. If records can be pooled, a central approach is a reasonable
+baseline. We explore collaboration when partners need to decide what to disclose.
 
-Sources: [tearing avoidance](https://www.nature.com/articles/s41586-024-07024-9),
-[PACMAN](https://arxiv.org/abs/2511.08818).
+## Slide 3 — What already exists
 
-There is also evidence that knowledge can transfer between machines. One study
-adapted a disruption predictor from J-TEXT to EAST using only 20 EAST discharges,
-reaching performance comparable to direct training on about 1,900 EAST
-discharges. This was prediction and transfer learning. It motivates our
-cross-facility question; it does not establish our agent's benefit.
+There are four foundations for this work. Princeton-led researchers demonstrated
+reinforcement learning on DIII-D for avoiding tearing instabilities while
+maintaining high-performance operation. PACMAN connects diagnostic processing,
+machine-learning predictors and controllers to DIII-D's control system.
 
-Source: [cross-device transfer](https://www.nature.com/articles/s42005-023-01296-9).
+Cross-device transfer has also shown promise: a disruption predictor adapted
+from J-TEXT to EAST with 20 EAST discharges achieved performance comparable to
+direct training on about 1,900 EAST discharges. That was a prediction study.
 
-### Our application
+Finally, TORAX provides a JAX-based, one-dimensional tokamak transport simulator.
+We use TORAX for our control experiments. These studies motivate our project;
+they do not establish a benefit from our particular federation design.
 
-Our project uses TORAX, Google DeepMind's tokamak transport simulator, for the
-control and cold-start experiments in the second block.
+Sources: [Princeton-led tearing avoidance](https://www.nature.com/articles/s41586-024-07024-9),
+[PACMAN](https://arxiv.org/abs/2511.08818),
+[cross-device transfer](https://www.nature.com/articles/s42005-023-01296-9),
+[TORAX](https://github.com/google-deepmind/torax).
 
-Alongside those experiments, we built an investigation assistant using the
-actual Flower AgentApp harness. Its proposed role is between experiments:
-requesting evidence, comparing cases and recommending a diagnostic check.
+## Slide 4 — The two things we built
 
-An investigator requests evidence from facility-specific stewards. Each steward
-has a separate model context, while a software gateway enforces which evidence
-can be released. The workflow records what was requested, shared or refused.
+First, we built an investigation assistant with the actual Flower AgentApp
+harness. An investigator requests approved evidence from facility stewards,
+compares thermal anomalies and recommends an independent diagnostic check.
+Its use case is helping a researcher decide what evidence to collect next.
+The current demonstration uses synthetic cases and a reduced thermal model.
 
-Sources: [TORAX](https://github.com/google-deepmind/torax),
-[Flower Agent](https://flower.ai/docs/agent/index.html).
+Second, we developed TORAX-based control and cold-start experiments within the
+HFMARL research project. The use case is warming up a new device's controller
+with experience from other devices and testing whether it needs fewer local trials.
 
-### Why federation
+The completed study uses thermal policy search. The broader architecture includes
+multiple control roles, but this study does not validate a full MARL controller
+and is not a PPO or SAC experiment. Results are mixed, so we do not claim a
+general federation speedup.
 
-If partners can pool their records, a central agent is a reasonable baseline.
-Our proposed use case is collaboration between independently operated
-facilities that retain control over their records and release policies.
-The investigator can request approved analyses without requiring every partner
-to supply its complete raw dataset to a central workspace.
+Source: [Flower Agent harness](https://flower.ai/docs/agent/index.html).
 
-That is the value we are exploring with Flower. Today the facilities are
-simulated; real distributed deployment and the benefit to investigators still
-need validation.
+## Slide 5 — Federation atlas
 
-### Switch to the application — separate tab
-
-Open the research app at `http://127.0.0.1:8787/#thermal`.
-The presentation stays open on port 8788.
-
-For this demonstration, the cases come from a reduced one-dimensional thermal
-model. They are separate from the TORAX control study.
-
-At Facility A, an apparent transport anomaly remains unresolved because we
-lack an independent measurement of delivered heating power.
-
-At Facility B, an independent power audit changes the interpretation of its
-own case. It suggests a useful measurement for A; it cannot establish A's cause.
-
-Facility C fails the demonstration's criterion for a comparable profile, so
-that analogy is rejected. We finish with a justified next step and an evidence
-trail, rather than claiming a diagnosis we cannot establish.
-
-If using **Run local demonstration**, say: “This replay follows a scripted
-sequence through the actual gateway. It makes no live LLM call.” A saved report
-must be introduced as a recorded run. A fresh hosted run uses account quota
-and must be deliberately launched in the application.
-
-### Transition
-
-The agent block asks what evidence we should request from another facility.
-The control block asks whether experience from other devices can reduce the
-local trials a new controller needs. That brings us to TORAX and HFMARL.
-
-## Block 2 — TORAX / HFMARL introduction and atlas cue
-
-This is the introduction and visualization cue for the second block. Its full
-results narration is separate work; no new results are asserted here.
-
-We use TORAX to evolve one-dimensional core plasma profiles in our control
-experiments. Our saved cold-start study tests source handover followed by local
-learning with policy search. It is not a PPO or SAC experiment.
-
-**Show the federation atlas.** This places our device models at the geographic
-locations of the facilities that inspired them. Click a machine to include its
-synthetic update; click it again to remove it. Drag to rotate the scene. The
-participation weights are computed by our aggregation code.
+This interactive map places our device models at the geographic locations of
+the facilities that inspired them. Click a machine to include or remove its
+synthetic update; drag to rotate the scene. The displayed weights come from our
+aggregation code.
 
 The coloured channels represent thermal, particle and current control roles.
-They illustrate the broader control architecture, not the LLM investigation
-workflow and not the scope of the thermal-only cold-start study. These are
-synthetic updates at nominal operating points. There are no live reactor
-connections, and the animation is not evidence of improved learning.
+They illustrate the broader control architecture. These are synthetic updates
+at nominal operating points, with no live reactor connections. The animation
+explains the design; the experiments assess whether sharing helps learning.
 
-The experiments must answer that question through comparisons with local
-learning, source costs and paired outcomes. TORAX's one-dimensional transport
-scope also limits what we can claim about physical-reactor performance.
+## Slide 6 — Architecture comparison
+
+On the left is our MARL system-design image: a flat team within a device and
+role-matched, asynchronous exchange across devices. It is an earlier audit
+snapshot, so its test counts and status labels should not be read as current.
+Its central idea is exchanging policy parameters to support controller learning
+in TORAX. The current cold-start experiment covers the thermal policy-search path.
+
+On the right is the Flower investigation workflow. The research interface passes
+a question to the investigator in the Flower AgentApp runtime. The investigator
+consults facility-specific stewards, whose software gateways enforce what local
+evidence can be released. Approved findings return to the investigator and are
+assembled into an advisory report for the researcher.
+
+The key comparison is what they exchange and what they produce: learned policy
+parameters for control research, versus approved findings for an investigation.
+The Flower assistant recommends a next diagnostic step; it does not actuate a reactor.
+
+Click either architecture image to inspect it at full resolution.
+
+## Slide 7 — Cold-start results
+
+Cold start is the challenge of learning a reliable controller for a new tokamak
+with little local experience, and federation aims to reduce the required trials
+by sharing policies learned on other devices.
+In our TORAX study, uniform federation lowered SPARC-like's median local shots
+to competence from 23.5 to 16 (about 32%), but the six paired seeds split evenly
+between faster, tied and slower outcomes, so this suggests a possible
+device-specific benefit rather than a proven general solution.
+
+If asked about the analysis: selection trials are excluded from confirmation
+but still charged as local shots. Competence requires two consecutive evaluations
+that complete, stay within limits and track within tolerance. Source training
+used 240 shots beyond these local totals. TCV-like went the other way, from 13.5
+to 18.5 median local shots. This is thermal policy search, not full MARL validation.
+
+## Optional application demonstration — separate tab
+
+Open the research app at `http://127.0.0.1:8787/#thermal`; keep the presentation
+on port 8788. At Facility A, an apparent transport anomaly remains unresolved
+without an independent delivered-power measurement. Facility B's power audit
+suggests that measurement for A, but cannot establish A's cause. Facility C
+fails the demonstration's comparability criterion, so that analogy is rejected.
+
+If using **Run local demonstration**, introduce it as a scripted replay through
+the actual gateway with no live LLM call. Introduce a saved report as a recorded
+run. A fresh hosted run consumes account quota and is launched deliberately in
+the application. Real distributed deployment and investigator benefit still
+need validation.

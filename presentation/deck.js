@@ -9,6 +9,7 @@
   function show(index) {
     current = Math.max(0, Math.min(index, slides.length - 1));
     slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+    document.body.classList.toggle('atlas-mode', slides[current].id === 'atlas');
     slides[current].querySelectorAll('iframe[data-src]').forEach(frame => {
       if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
     });

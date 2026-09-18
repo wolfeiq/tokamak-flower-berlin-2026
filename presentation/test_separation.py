@@ -14,7 +14,8 @@ def test_presentation_has_visuals_but_no_execution_api():
     worker.start()
     base = f"http://127.0.0.1:{server.server_port}"
     try:
-        for path in ("/", "/deck.js", "/visuals/atlas.html", "/visuals/diiid_like.html"):
+        for path in ("/", "/deck.js", "/visuals/atlas.html", "/visuals/diiid_like.html",
+                     "/visuals/marl-architecture.png", "/visuals/flower-agent-architecture.svg"):
             with urlopen(base + path) as response:
                 assert response.status == 200
         for path in ("/api/run", "/api/thermal", "/../flower-app/dashboard.py", "/serve.py"):

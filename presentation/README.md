@@ -28,9 +28,11 @@ a hosted run, resets a ledger or starts an experiment.
 | File | Purpose |
 |---|---|
 | `index.html`, `style.css`, `deck.js` | Browser presentation, two clearly labelled blocks |
-| [SCRIPT.md](SCRIPT.md) | Spoken LLM-agent script, source links and 3D demo cues |
+| [SCRIPT.md](SCRIPT.md) | Seven-slide speaker script, source links and demo cues |
 | `visuals/atlas.html` | Geographic federation atlas exported from the existing `viz/` code |
 | `visuals/diiid_like.html` | Existing registry-based reactor assembly, copied for portable presentation use |
+| `visuals/marl-architecture.png` | User-selected `results/audit/system_design.png`, preserved as an earlier audit snapshot |
+| `visuals/flower-agent-architecture.svg` | Editable diagram of the current Flower investigation workflow |
 | `build_visuals.py` | Rebuild those exports using the repository's NumPy environment |
 | `serve.py` | Independent read-only presentation server |
 
@@ -52,7 +54,21 @@ The 3D assembly is illustrative geometry. TORAX supplies the separate 1-D
 transport experiments; a rendered reactor is not itself a plasma simulator.
 The app's default thermal investigation uses a reduced model, explicitly labelled.
 
-Block 1 contains the LLM-agent story developed with the user. Block 2 currently
-introduces TORAX, the atlas and the experimental question. Detailed cold-start
-results and the full block-2 narration require their own evidence review;
-animation is not evidence that federation improves learning.
+## Seven-slide sequence
+
+1. Full-screen tokamak opening, preserved from the previous design.
+2. Problem statement: limited local experience, different devices and controlled disclosure.
+3. Four existing foundations: Princeton-led RL, PACMAN, cross-device transfer and TORAX.
+4. Our Flower LLM agent and TORAX/HFMARL research, with use cases and implementation scope.
+5. The interactive geographic map fills the entire slide.
+6. Side-by-side architecture comparison: the existing MARL diagram and a new editable Flower-agent diagram. Click either image to inspect it at full resolution.
+7. Cold-start results: SPARC-like median comparison and all six paired seed outcomes, with analysis and source-cost qualifications.
+
+`build_results.py PATH_TO_STUDY_DIRECTORY` regenerates the two static SVG graphs
+and `visuals/coldstart-results.json` directly from the saved checkpoint and
+summary. It excludes policy-selection shots from competence confirmation while
+retaining their cost. The plots use the completed study's six matched seeds.
+
+The completed cold-start results are mixed. The current study evaluates thermal
+policy search, not a validated end-to-end MARL controller. The map explains the
+broader architecture; its animation is not evidence of a learning benefit.

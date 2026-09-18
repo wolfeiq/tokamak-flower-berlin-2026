@@ -312,23 +312,26 @@ def make_server(app, port=8787):
                 # These self-contained pages inline their scripts and pull
                 # three.js from pinned CDNs, and may be framed by us alone.
                 self.send(
-                    TWIN_PAGES[self.path].read_bytes(),
+                    TWIN_PAGES[self.path].read_text(encoding="utf-8").replace(
+                        "</body>", '<script src="/twin-selector.js"></script></body>'
+                    ).encode("utf-8"),
                     content_type="text/html; charset=utf-8",
                     csp=(
                         "default-src 'none'; "
-                        "script-src 'unsafe-inline' "
+                        "script-src 'self' 'unsafe-inline' "
                         "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
                         "style-src 'unsafe-inline'; img-src data: blob:; "
                         "connect-src 'self'; frame-ancestors 'self'"
                     ),
                 )
-            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/style.css"):
+            elif self.path in ("/", "/app.js", "/thermal.js", "/physics.js", "/twin-selector.js", "/style.css"):
                 name = "index.html" if self.path == "/" else self.path[1:]
                 mime = {
                     "index.html": "text/html",
                     "app.js": "text/javascript",
                     "thermal.js": "text/javascript",
                     "physics.js": "text/javascript",
+                    "twin-selector.js": "text/javascript",
                     "style.css": "text/css",
                 }[name]
                 self.send(
@@ -337,6 +340,14 @@ def make_server(app, port=8787):
                 )
             else:
                 self.send({"error": "Not found"}, 404)
+
+        def do_HEAD(self):
+            # Availability check for the fixed reactor asset set; never reads a
+            # user-supplied filesystem path or executes a tool.
+            status = 403 if not self.valid_host() else 200 if self.path in TWIN_PAGES else 404
+            self.send_response(status)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
 
         def do_POST(self):
             origin = self.headers.get("Origin")

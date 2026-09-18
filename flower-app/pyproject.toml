@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fusion-investigator"
-version = "0.2.0"
-description = "Flower AgentApp for cross-facility fusion model investigation"
+version = "0.3.0"
+description = "Investigate synthetic tokamak thermal anomalies with Flower agents, facility stewards and controlled evidence sharing."
 license = { file = "LICENSE.md" }
 requires-python = ">=3.11,<4"
 dependencies = ["flwr>=1.37.0,<1.38", "openai>=2.16,<3", "numpy>=2,<3"]
@@ -20,7 +20,7 @@ fusion-investigator = "fusion_agent.cli:main"
 packages = ["fusion_agent"]
 
 [tool.flwr.app]
-publisher = "local"
+publisher = "marykor"
 display-name = "Fusion Investigator"
 fab-format-version = 1
 flwr-version-target = "1.37.0"

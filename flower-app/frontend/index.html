@@ -31,7 +31,11 @@
       <div><label for="thermal-file">IMPORT A RECORDED REPORT</label><input type="file" id="thermal-file" accept="application/json"></div>
       <div id="thermal-error" class="error" role="alert" hidden></div>
     </div>
-    <div id="thermal-cards" class="site-grid thermal-cards"></div>
+    <div class="facility-picker-heading"><h3>Choose a device</h3><p class="muted">Click a tokamak to select its facility. Drag to inspect the geometry.</p></div>
+    <div id="thermal-cards" class="site-grid thermal-cards" role="group" aria-label="Choose a facility device"></div>
+    <p id="facility-selection" class="facility-selection" role="status"></p>
+    <a class="evidence-story-link" href="#sharing-story">See how B’s shared audit helps A →</a>
+    <p class="small muted">Illustrative geometry of synthetic facilities · selection also updates the thermal response tools · 3D views require WebGL.</p>
     <div class="panel release-panel"><form id="release-form"><div><label for="release-site">FACILITY</label><select id="release-site"><option value="facility-a">A · requesting facility</option><option value="facility-b">B · partner facility</option><option value="facility-c">C · partner facility</option></select></div><div><label for="release-kind">EVIDENCE PRODUCT</label><select id="release-kind"><option value="context">Context · 1 unit</option><option value="balance">Balance · 2 units</option><option value="source_check">Source audit · 2 units</option><option value="raw_logs">Raw logs · prohibited</option></select></div><button type="submit" class="secondary" id="release-button">Request local release →</button></form><p class="small muted">context → balance → source audit · 5 policy units per facility and case · cached requests cost no additional units</p><p id="thermal-conclusion" class="thermal-conclusion" role="status">Release evidence to inspect what each facility permits.</p></div>
   </div>
 </section>
@@ -40,6 +44,16 @@
   <div class="section-content">
     <div class="kicker">RELEASE HISTORY</div>
     <h2>Released evidence and decisions</h2>
+    <article class="panel sharing-story" id="sharing-story">
+      <div class="panel-title"><h3>How B’s shared evidence helps A</h3><span class="pill" id="sharing-source">Recorded evidence</span></div>
+      <p class="sharing-intro">B checks its own heating. The investigator shares the lesson with A.</p>
+      <div class="sharing-grid">
+        <div class="sharing-comparison"><h4>What changed at B?</h4><p class="muted">How quickly heat seems to escape · reference = B’s expected level in this model</p><svg id="audit-comparison-chart" viewBox="0 0 560 245" role="img" aria-label="Waiting for B’s released evidence"></svg><p id="sharing-audit" class="sharing-audit"></p><p class="small muted">Released categories, not exact measurements. The temperature profile itself is unchanged.</p></div>
+        <div class="sharing-next"><div class="sharing-transfer">APPROVED FINDING FROM B → INVESTIGATOR → A</div><h4>What should A do next?</h4><p id="sharing-next-step" role="status"></p><p id="sharing-a-status" class="muted"></p><p id="sharing-c-status" class="muted"></p></div>
+      </div>
+      <details class="sharing-details"><summary>Evidence behind this graphic</summary><div id="sharing-evidence-ids"></div></details>
+      <p class="footnote">This visual follows the selected evidence source and the replay position. The default facilities are synthetic; the demo illustrates sharing a useful clue, without measuring an advantage over a central agent.</p>
+    </article>
     <div class="thermal-grid">
       <article class="panel"><div class="panel-title"><h3>Released radial profiles</h3><span class="pill">Coarsened summaries</span></div><p class="muted small">Normalised temperature versus normalised minor radius. Spatial profiles, not time traces.</p><svg id="thermal-chart" viewBox="0 0 560 230" role="img" aria-label="Released radial temperature profiles"></svg><p id="thermal-legend" class="small muted">No profile has been released.</p><p class="footnote">A partner's audit can suggest a measurement. It cannot establish the cause at another facility.</p></article>
       <article class="panel"><div class="panel-title"><h3>Evidence trail</h3><span id="thermal-progress" class="pill">0 / 0</span></div><div class="trail-controls"><button id="thermal-play" class="text-button">Play trail</button><button id="thermal-next" class="text-button">Next event</button><button id="thermal-rewind" class="text-button">Rewind view</button></div><ol id="thermal-trail"></ol></article>

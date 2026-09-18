@@ -41,6 +41,16 @@ The app supplies fusion analysis tools and a bounded tool loop, following
   releases and the demo's gradient-based analogy rejection rule.
 - Replay evidence decisions, view released radial profiles and request products
   manually in the browser. Import an earlier THERMAL `report.json` locally.
+- Follow **How B's shared evidence helps A**: a before/after audit graph of B's
+  released transport categories, linked to the supported next measurement at A.
+  It follows the selected report and replay position, hides unreleased findings,
+  and cites evidence IDs. It illustrates information sharing, not a measured
+  advantage over a central agent or a diagnosis transferred to A.
+- Select Facility A, B or C through interactive 3D tokamak cards. Click a reactor
+  or its labelled button to select it; drag to orbit. Selection synchronizes the
+  evidence request, thermal tools and assembly viewer. Geometry comes from the
+  existing `assets/3d/html/` exports and requires WebGL plus the pinned Three.js
+  CDN dependencies. The labelled buttons remain usable without 3D.
 - Explore independent `demo-a/b/c` toy cases. Local fitting ranks reduced heating
   effectiveness against increased heat loss. These are not the same facilities
   or model as the transport investigation above.
@@ -59,6 +69,19 @@ Actual plant diagnostics need a separately validated site adapter. The demo is a
 workflow demonstration, not a realistic tokamak digital twin or causal diagnosis.
 
 ## Install and build
+
+### Public Flower Hub release
+
+Public agent identity: `@marykor/fusion-investigator`. The LLM was not trained
+or fine-tuned on TORAX data. Default agent evidence comes from the reduced
+thermal model; TORAX control training belongs to the separate research project.
+The Hub listing serves the agent, while this repository supplies the local 3D UI.
+
+`python scripts/prepare_hub.py` stages an explicit allowlist in
+`dist/fusion-investigator/`, using `scripts/HUB_README.md` for the listing.
+Review that directory, build it with `flwr build`, then publish it with
+`flwr app publish dist/fusion-investigator`. It excludes credentials, reports,
+ledgers, experiment data and private/generated thermal fixtures.
 
 ### Local frontend
 
