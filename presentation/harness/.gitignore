@@ -1,0 +1,5 @@
+.venv/
+.state/
+__pycache__/
+preview-*.png
+.exports/

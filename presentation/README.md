@@ -1,5 +1,18 @@
 # Fusion presentation
 
+## Five-minute Flower harness talk
+
+The focused Flower harness pitch is in [`harness/`](harness/README.txt):
+
+- [PowerPoint](harness/fusion-investigator.pptx), with six slides, speaker notes and an embedded gateway demo video.
+- [Browser deck](harness/index.html), with interactive evidence replay and an optional local Python gateway.
+- [PDF](harness/presentation.pdf) and [speech](harness/speech_for_harness.txt).
+
+This talk covers the intended users, inputs and outputs, architectural tradeoffs,
+and why Flower fits the investigation workflow. Its gateway rehearsal uses
+synthetic evidence and makes no model calls. The instructions below describe
+the separate, broader research presentation.
+
 This folder is the **presentation**, with a browser deck, speaker script and
 interactive 3D visualizations. The working research application is separate in
 [`../flower-app/`](../flower-app/README.md). Its controls are not slides.

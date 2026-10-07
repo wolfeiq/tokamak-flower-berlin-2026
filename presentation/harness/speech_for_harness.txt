@@ -1,0 +1,60 @@
+Five-minute speech
+Delivery target: roughly four and a half minutes at 120 words per minute, including short pauses. Bracketed cues and section labels are not spoken.
+
+1. What it is, and who it is for
+
+[Slide 1: An investigation harness for fusion teams.]
+
+Flower's agent harness provides the runtime around an AI agent: executing its application, connecting it to a model, and carrying its responses and run state. We built Fusion Investigator on that foundation.
+
+It is a research assistant for experimental physicists, diagnostic specialists, and facility teams deciding what to measure next between experiments.
+
+Imagine a tokamak responds weakly to heating. Is heat escaping faster, or did less power reach the plasma? Our application lets an investigator consult partner evidence through controlled tools, while each site's gateway decides what can be released.
+
+2. What goes in, and what comes out
+
+[Slide 2: A question in. A next experiment out.]
+
+The investigation starts with a research question and configured site tools. In this demo, local analysis consumes device parameters and synthetic temperature, density, and heating profiles.
+
+The model receives approved summaries: machine context, a transport band, eleven rounded temperature samples, and power-audit findings. The gateway keeps the underlying arrays out of those responses.
+
+The intended output is a report that cites evidence, explains uncertainty, and recommends the next measurement. Alongside it, the application records tool results, including releases, refusals, and evidence identifiers, so researchers can inspect the basis for the recommendation.
+
+3. Why this approach fits the problem
+
+[Slide 3: Flexible investigation. Firm disclosure rules.]
+
+This is a strong fit when facilities want to share useful findings while retaining control over disclosure. Central analysis requires permission to pool the data. A prompt alone cannot enforce access rules. A fixed script is useful for repeatable questions; an agent can choose its next request from the evidence it receives.
+
+Our design combines that flexibility with a deterministic gateway: prerequisites, five disclosure units per site, cached releases, and applicability checks. A steward model's approval cannot override these rules.
+
+That is the architectural advantage. Whether agent-directed investigation improves research outcomes still needs comparison with the fixed workflow.
+
+4. Why Flower
+
+[Slide 4: Flower supplies the runtime. We supply the science.]
+
+Flower is a good choice because it supplies infrastructure this workflow needs: AgentApp execution, a compatible model endpoint, streamed events, and persisted run-series state. Our application uses those facilities to deliver reports, retain tool evidence, and reconstruct conversation history.
+
+The same app can be developed with a local SuperLink and submitted for hosted execution on SuperGrid. That lets us focus on the scientific tools and disclosure gateway instead of building the surrounding runtime.
+
+The responsibilities are clear: Flower runs the agent; our application defines its tools, and our site gateway enforces evidence release.
+
+5. The embedded demonstration
+
+[Slide 5: Follow the evidence. Start Play sequence and narrate the changing results. This is a fixed synthetic gateway rehearsal, not a hosted LLM run.]
+
+Here is the gateway workflow, using three synthetic facilities and a reduced transport model. This rehearsal makes no model calls.
+
+A's apparent transport is elevated, but its heating source is unverified. C fails the demo's gradient criterion, so its balance request is denied.
+
+B has an independent power audit. It reports less delivered power than assumed; recomputed transport is near reference. A has no such audit, so its diagnosis remains open.
+
+The final requests demonstrate a raw-log refusal and a cached repeat with no additional charge.
+
+6. The takeaway
+
+[Slide 6: Measure the power that arrived.]
+
+The next experiment is to independently verify delivered heating at A. That is the value of this Flower-based harness: a focused investigation, controlled evidence, and a recommendation researchers can trace and test.
