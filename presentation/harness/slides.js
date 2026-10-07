@@ -53,7 +53,7 @@
     else if (event.key === 'End') show(slides.length - 1);
     else if (event.key.toLowerCase() === 'f') fullscreen();
     else if (event.key.toLowerCase() === 'n') toggleNotes();
-    else if (event.key.toLowerCase() === 'd' && current === demoIndex) { event.preventDefault(); pause(); advance(); }
+    else if (event.key.toLowerCase() === 'd' && current === demoIndex) { event.preventDefault(); setReplay(true); pause(); advance(); }
     else if (event.key === 'Escape') { $('notes-panel').hidden = true; $('custom-form').hidden = true; }
   });
 
@@ -61,6 +61,15 @@
   // findings or implements a second version of the disclosure policy in JS.
   const recording = window.GATEWAY_RECORDING;
   const recorded = recording?.steps || [];
+  function setReplay(open) {
+    pause();
+    $('walkthrough').hidden = open;
+    $('replay-view').hidden = !open;
+    $('investigation').classList.toggle('replaying', open);
+    $('replay-toggle').setAttribute('aria-expanded', String(open));
+    $('replay-toggle').textContent = open ? 'Back to worked example' : 'Inspect gateway replay';
+  }
+  $('replay-toggle').addEventListener('click', () => setReplay($('replay-view').hidden));
   let mode = 'recorded', cursor = 0, liveEvents = [], liveNext = 0;
   let timer = null, playing = false, busy = false, liveAvailable = false;
   const labels = {context:'Context', balance:'Balance', source_check:'Source', raw_logs:'Raw logs'};
@@ -206,75 +215,12 @@
     } catch { /* Bundled replay is fully functional without a backend. */ }
   }
 
-  // Conceptual magnetic-field sculpture. These artistic field lines are not
-  // simulation output or a diagram of a specific machine's engineering.
-  const canvas = $('plasma'), ctx = canvas.getContext('2d');
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let frozen = false, previousFrame = 0;
-  const stars = Array.from({length:145},(_,i)=>({x:((i*137.508)%1600),y:((i*i*29.73)%900),r:i%4===0?1.2:.6}));
-  function project(x,y,z,angle) {
-    const ca=Math.cos(angle),sa=Math.sin(angle);
-    const x1=x*ca-z*sa,z1=x*sa+z*ca;
-    const y1=y*.52-z1*.854, z2=y*.854+z1*.52;
-    const x2=x1*.92-y1*-.392, y2=x1*-.392+y1*.92;
-    const perspective=4.4/(4.4+z2*.55);
-    return [1135+x2*335*perspective,424+y2*335*perspective,z2];
-  }
-  function drawPlasma(time=0) {
-    if (!ctx) return;
-    ctx.clearRect(0,0,1600,900);
-    const glow=ctx.createRadialGradient(1130,426,0,1130,426,550);
-    glow.addColorStop(0,'#38291e45');glow.addColorStop(.45,'#663b231f');glow.addColorStop(1,'#080d1500');
-    ctx.fillStyle=glow;ctx.fillRect(450,0,1150,900);
-    for (const star of stars) {ctx.beginPath();ctx.arc(star.x,star.y,star.r,0,Math.PI*2);ctx.fillStyle=star.x>700?'#a5b8cc50':'#a5b8cc18';ctx.fill();}
-    ctx.strokeStyle='#61708425';ctx.lineWidth=.7;
-    [310,390,475].forEach(r=>{ctx.beginPath();ctx.ellipse(1135,424,r,r*.78,-.35,0,Math.PI*2);ctx.stroke();});
-    const rotation=frozen || reducedMotion ? .25 : .25+time*.000018;
-    const paths=[];
-    for(let line=0;line<48;line++) {
-      const points=[];
-      const phase=line/48*Math.PI*2;
-      for(let j=0;j<=240;j++) {
-        const theta=j/240*Math.PI*2;
-        const phi=phase+theta*3;
-        const minor=.31+.025*Math.sin(phase*3);
-        const major=1.01+minor*Math.cos(phi);
-        points.push(project(major*Math.cos(theta),major*Math.sin(theta),minor*Math.sin(phi),rotation));
-      }
-      paths.push({points,depth:points.reduce((sum,p)=>sum+p[2],0)/points.length,line});
-    }
-    paths.sort((a,b)=>b.depth-a.depth);
-    ctx.globalCompositeOperation='screen';
-    for(const {points,line} of paths) {
-      ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-      const shade=line%6===0?'#ffd1a5b0':line%3===0?'#ff986e80':'#e7764659';
-      ctx.strokeStyle=shade;ctx.lineWidth=line%6===0?1.35:.75;ctx.stroke();
-    }
-    for(let coil=0;coil<18;coil++) {
-      const theta=coil/18*Math.PI*2;
-      ctx.beginPath();
-      for(let j=0;j<=80;j++) {const phi=j/80*Math.PI*2;const radius=1.01+.40*Math.cos(phi);const p=project(radius*Math.cos(theta),radius*Math.sin(theta),.40*Math.sin(phi),rotation);j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
-      ctx.strokeStyle=coil%3===0?'#f6b78750':'#89a5ba25';ctx.lineWidth=.8;ctx.stroke();
-    }
-    // Moving packets lend direction without changing any evidence display.
-    for(let i=0;i<10;i++) {
-      const theta=(i/10*Math.PI*2+(frozen?0:time*.00012));const phi=theta*3+i*.3;
-      const radius=1.01+.325*Math.cos(phi);const p=project(radius*Math.cos(theta),radius*Math.sin(theta),.325*Math.sin(phi),rotation);
-      const spark=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],10);spark.addColorStop(0,'#ffdfbcbb');spark.addColorStop(1,'#ffae6000');ctx.fillStyle=spark;ctx.fillRect(p[0]-10,p[1]-10,20,20);
-    }
-    ctx.globalCompositeOperation='source-over';
-    const veil=ctx.createLinearGradient(430,0,955,0);veil.addColorStop(0,'#080d15');veil.addColorStop(.42,'#080d15ed');veil.addColorStop(1,'#080d1500');ctx.fillStyle=veil;ctx.fillRect(0,0,960,900);
-  }
-  function animate(time) {
-    if (current === 0 && !frozen && !reducedMotion && !document.hidden && time-previousFrame>45) {drawPlasma(time);previousFrame=time;}
-    requestAnimationFrame(animate);
-  }
-  function preparePrint() {pause();frozen=true;drawPlasma(0);mode='recorded';$('demo-mode').value=mode;cursor=recorded.length;render();$('notes-panel').hidden=true;document.documentElement.classList.add('exporting');slides.forEach(slide=>{slide.inert=false;slide.removeAttribute('aria-hidden');});}
+  function drawPlasma() {} // Kept for existing export callers; the talk uses a static diagram.
+  function preparePrint() {pause();setReplay(false);mode='recorded';$('demo-mode').value=mode;cursor=recorded.length;render();$('notes-panel').hidden=true;document.documentElement.classList.add('exporting');slides.forEach(slide=>{slide.inert=false;slide.removeAttribute('aria-hidden');});}
   addEventListener('beforeprint', preparePrint);
-  addEventListener('afterprint', () => {frozen=false;document.documentElement.classList.remove('exporting');show(current);});
-  window.presentation = {show,advance,preparePrint,render,drawPlasma,get state(){return {current,mode,cursor,liveNext,liveAvailable,busy,events:events()};}};
+  addEventListener('afterprint', () => {document.documentElement.classList.remove('exporting');show(current);});
+  window.presentation = {show,advance,preparePrint,render,drawPlasma,setReplay,get state(){return {current,mode,cursor,liveNext,liveAvailable,busy,events:events()};}};
   resize(); render(); detectLive();
   show(Math.max(0,slides.findIndex(slide=>`#${slide.id}`===location.hash)));
   if (!recorded.length) error('The bundled evidence recording is missing. Regenerate it with capture_evidence.py.');
-  requestAnimationFrame(animate);
 })();

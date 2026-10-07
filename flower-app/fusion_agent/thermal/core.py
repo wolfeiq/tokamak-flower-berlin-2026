@@ -52,8 +52,8 @@ SCENARIOS = {
     # Same observable ambiguity, but here an independent audit of delivered
     # power exists, so the ambiguity is resolvable at B and only at B.
     "B": {"power_fraction": 1.0, "source_audit": True},
-    # Barely heated: the profile never reaches the critical gradient, so it
-    # carries no information about transport at all.
+    # Barely heated: fails this demo's chosen gradient applicability rule.
+    # This is not a universal claim of zero transport information.
     "C": {"power_fraction": 0.001, "source_audit": False},
 }
 
@@ -61,8 +61,8 @@ SCENARIOS = {
 # plasma actually absorbed. This is the whole diagnostic ambiguity: assuming it
 # away turns a heating-delivery fault into an apparent transport anomaly.
 ASSUMED_SOURCE_FACTOR = 1.6
-# Below the critical normalised gradient a profile is too flat to identify
-# transport, whatever estimator is used.
+# Illustrative applicability threshold, not an estimator-independent limit.
+# Real identifiability also depends on source knowledge, noise and diagnostics.
 USABLE_R_OVER_LT = 4.0
 _WINDOW = slice(10, 90)
 

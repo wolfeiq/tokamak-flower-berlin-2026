@@ -28,7 +28,7 @@ disclosure gateway. There is one AgentApp and one dashboard. See
 A between-experiment assistant built with Flower's **AgentApp harness**. Flower
 owns app execution, the model bridge, run-series traces and shared run state.
 The app supplies fusion analysis tools and a bounded tool loop, following
-[Flower's collaborative-agent tutorial](https://flower.ai/docs/agent/tutorials/build-a-collaborative-agent.html).
+[Flower's AgentApp runtime contract](https://flower.ai/docs/agent/explanations/agentapp-runtime.html).
 
 ## What works
 

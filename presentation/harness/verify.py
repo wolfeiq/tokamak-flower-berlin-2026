@@ -28,7 +28,7 @@ def main():
         thread.start()
         base = f"http://127.0.0.1:{server.server_port}"
         try:
-            for route in ("/.venv/pyvenv.cfg", "/.state/presentation.sqlite3", "/../flower-app/pyproject.toml"):
+            for route in ("/.venv/pyvenv.cfg", "/.state/presentation.sqlite3", "/speaker_deep_dive.txt", "/../flower-app/pyproject.toml"):
                 try:
                     urlopen(base + route)
                     raise AssertionError("Private path was served")

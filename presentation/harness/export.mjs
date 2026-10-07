@@ -42,6 +42,9 @@ try{
   assert.equal(await evaluate('window.GATEWAY_RECORDING.steps[4].result.reason'),'analogy-not-applicable');
   assert.equal(await evaluate('window.GATEWAY_RECORDING.steps[9].result.cached'),true);
   await evaluate('window.presentation.show(4)');
+  assert.equal(await evaluate('document.getElementById("replay-view").hidden'),true);
+  await evaluate('document.getElementById("replay-toggle").click()');
+  assert.equal(await evaluate('document.getElementById("walkthrough").hidden'),true);
   await evaluate('window.presentation.advance()');
   assert.equal(await evaluate('window.presentation.state.cursor'),1);
   assert.match(await evaluate('document.getElementById("decision-title").textContent'),/context/);
@@ -84,10 +87,17 @@ try{
     const capture=await cdp('Page.captureScreenshot',{format:'png'});
     await writeFile(path.join(root,`preview-${String(index+1).padStart(2,'0')}.png`),Buffer.from(capture.data,'base64'));
   }
-  const overflow=await evaluate(`Array.from(document.querySelectorAll('.slide')).flatMap(slide=>Array.from(slide.querySelectorAll('h1,h2,h3,.io-card,.flower-runtime,.flower-domain,.approach-comparison,.policy-proof,.audience-ribbon,.fit-caption,.facility-card,.demo-controls,.conclusion-triptych')).filter(el=>{const r=el.getBoundingClientRect();return r.right>1602||r.bottom>834||r.left<0;}).map(el=>({slide:slide.id,element:el.className||el.tagName,bounds:el.getBoundingClientRect().toJSON()})))`);
-  assert.deepEqual(overflow,[],`Slide content overflow: ${JSON.stringify(overflow)}`);
-  const internalOverlap=await evaluate(`Array.from(document.querySelectorAll('.io-card')).some(card=>card.querySelector('p').getBoundingClientRect().bottom+8>card.querySelector('.io-boundary').getBoundingClientRect().top) || document.querySelector('.approach-comparison').getBoundingClientRect().bottom+16>document.querySelector('.fit-caption').getBoundingClientRect().top`);
-  assert.equal(internalOverlap,false,'Input/output card copy or comparison caption overlaps adjacent content.');
+  // Inspect each displayed slide; hidden-slide rectangles cannot establish fit.
+  for(let index=0;index<6;index++){
+    await evaluate(`window.presentation.show(${index})`);await sleep(220);
+    const overflow=await evaluate(`Array.from(document.querySelector('.slide.active').querySelectorAll('h1,h2,h3,.bottom-note,.plain-card,.choice-columns,.rule-strip,.runtime-banner,.run-flow,.return-path,.runtime-bottom,.case-rows,.example-result,.evidence-caption,.evaluation-plan')).filter(el=>el.getClientRects().length && el.getBoundingClientRect().width>0).filter(el=>{const r=el.getBoundingClientRect();return r.right>1520||r.bottom>809||r.left<80||(el.matches('.plain-card')&&el.scrollHeight>el.clientHeight+2);}).map(el=>({element:el.className||el.tagName,bounds:el.getBoundingClientRect().toJSON()}))`);
+    assert.deepEqual(overflow,[],`Slide ${index+1} overflow: ${JSON.stringify(overflow)}`);
+  }
+  const speech=await readFile(path.join(root,'speech_for_harness.txt'),'utf8');
+  const sections=speech.split(/\n\d+\. [^\n]+\n/).slice(1).map(s=>s.trim());
+  const notes=await evaluate('Array.from(document.querySelectorAll(".speaker-note")).map(n=>n.textContent.trim())');
+  assert.deepEqual(notes,sections,'Browser notes must match the speech exactly.');
+  assert.equal(await evaluate('document.getElementById("replay-view").hidden'),true);
   // Verify fitting at typical laptop and projector sizes, without changing layout.
   for(const [width,height] of [[1366,768],[1920,1080],[1024,768]]){
     await cdp('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});await sleep(60);
@@ -102,23 +112,15 @@ try{
   assert.equal((pdfText.match(/\/Type\s*\/Page\b/g)||[]).length,6,'PDF must have six pages.');
   if(process.argv.includes('--powerpoint')){
     const directory=path.join(root,'.exports');await mkdir(directory,{recursive:true});
-    await evaluate(`(()=>{const style=document.createElement('style');style.textContent='.slide{transition:none!important}.slide-dots,.footer-controls,.demo-controls{visibility:hidden!important}.demo-mode select{appearance:none;pointer-events:none}.runtime-reference{pointer-events:none}';document.head.appendChild(style);})()`);
+    await evaluate(`(()=>{const style=document.createElement('style');style.textContent='.slide{transition:none!important}.slide-dots,.footer-controls,.demo-controls,.replay-toggle{visibility:hidden!important}.demo-mode select{appearance:none;pointer-events:none}.runtime-reference{pointer-events:none}';document.head.appendChild(style);})()`);
     await cdp('Emulation.setDeviceMetricsOverride',{width:1600,height:900,deviceScaleFactor:1.5,mobile:false});
     for(let index=0;index<6;index++){
       await evaluate(`window.presentation.show(${index})`);
-      if(index===4)await evaluate('document.getElementById("demo-rewind").click()');
       await sleep(80);
       const capture=await cdp('Page.captureScreenshot',{format:'png'});
       await writeFile(path.join(directory,`slide-${String(index+1).padStart(2,'0')}.png`),Buffer.from(capture.data,'base64'));
     }
-    await cdp('Emulation.setDeviceMetricsOverride',{width:1600,height:900,deviceScaleFactor:1,mobile:false});
-    await evaluate('window.presentation.show(4);document.getElementById("demo-rewind").click()');
-    for(let frame=0;frame<=10;frame++){
-      if(frame)await evaluate('window.presentation.advance()');
-      const capture=await cdp('Page.captureScreenshot',{format:'png'});
-      await writeFile(path.join(directory,`demo-${String(frame).padStart(2,'0')}.png`),Buffer.from(capture.data,'base64'));
-    }
-    console.log('Exported six 2400×1350 slide images and eleven gateway replay frames for PowerPoint.');
+    console.log('Exported six 2400×1350 slide images for PowerPoint; worked example is static.');
   }
   assert.deepEqual(errors,[],`Browser errors: ${JSON.stringify(errors)}`);
   console.log('PASS: 6 slides, 10 gateway events, playback, profile disclosure, rewind, notes, 3 viewport sizes, zero browser exceptions.');

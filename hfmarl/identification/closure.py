@@ -1,24 +1,23 @@
-"""Closure-free transport identification.
+"""Effective transport inference from an integrated power balance.
 
 THE IDEA
 --------
-The transport equations split into two parts with very different epistemic
-status:
+The reduced model separates an energy balance from a diffusive closure:
 
-    conservation   (3/2) d(n T)/dt + (1/rho) d(rho q)/drho = S      CERTAIN
+    conservation   (3/2) d(n T)/dt + (1/rho) d(rho q)/drho = S
     closure        q = -n chi dT/drho                               A MODEL
 
-Fitting TORAX's own parameters assumes BOTH are right and only the parameters
-are unknown. Here we impose conservation exactly and treat ``chi(rho)`` as a
-free field, identified from data. That is something inverting the simulator
-structurally cannot do, because TORAX bakes its closure in -- and it is what
-experimental transport physicists do by hand ("power balance analysis").
+Here ``chi(rho)`` is inferred as a spatial field instead of fitting the
+forward solver's particular parametric transport law. This is classical
+power-balance analysis. It still assumes a diffusive interpretation, suitable
+geometry, and an adequate accounting of energy sources, sinks and storage.
 
-The source S is KNOWN: it is the heating the controller commanded. That is
-what makes the problem well-posed, and it is the same structural trick that
-rescued the Cosserat stiffness identification -- expose the unknown against a
-known or data-derived quantity via the integrated balance law, instead of
-fighting under-resolved collocation derivatives.
+The inversion assumes a known net source S. A controller's heating command
+is not necessarily the power deposited in the electron channel. If S is
+misestimated, the inferred chi absorbs that error; independent source evidence
+is needed to distinguish a source discrepancy from a transport change. The
+integrated balance exposes chi against measured or assumed quantities rather
+than fitting under-resolved collocation derivatives.
 
 TWO ESTIMATORS, DELIBERATELY
 ----------------------------
@@ -80,9 +79,12 @@ def heat_flux_from_balance(
     is only invoked afterwards, in ``chi_from_flux``.
 
     Args:
-        rho: (n_rho,) normalised radius, ascending, starting at 0.
-        n_e, T_e: (n_rho,) or (n_t, n_rho). Units are the caller's; chi comes
-            back in [T_e]*[rho]^2 / ([T_e]*[rho]) consistent units.
+        rho: (n_rho,) radial coordinate, ascending, starting at 0. The
+            thermal app passes physical radius in metres despite this name.
+        n_e, T_e: (n_rho,) or (n_t, n_rho). With radius in metres, density
+            in m^-3, temperature in joules and source in W/m^3, q is W/m^2
+            and the inferred chi is m^2/s. Normalised coordinates require
+            consistent rescaling of the balance and gradient.
         source: volumetric heating, same shape convention.
         times: (n_t,) needed only when the inputs are time-dependent.
         volume_element: V'(rho); defaults to rho (cylindrical).

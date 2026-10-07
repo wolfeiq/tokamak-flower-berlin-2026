@@ -4,12 +4,12 @@
 
 The focused Flower harness pitch is in [`harness/`](harness/README.txt):
 
-- [PowerPoint](harness/fusion-investigator.pptx), with six slides, speaker notes and an embedded gateway demo video.
+- [PowerPoint](harness/fusion-investigator.pptx), with six slides, speaker notes, a tool-loop diagram and a static worked example.
 - [Browser deck](harness/index.html), with interactive evidence replay and an optional local Python gateway.
 - [PDF](harness/presentation.pdf) and [speech](harness/speech_for_harness.txt).
 
 This talk covers the intended users, inputs and outputs, architectural tradeoffs,
-and why Flower fits the investigation workflow. Its gateway rehearsal uses
+and how Flower runs the investigation workflow. Its optional gateway rehearsal uses
 synthetic evidence and makes no model calls. The instructions below describe
 the separate, broader research presentation.
 

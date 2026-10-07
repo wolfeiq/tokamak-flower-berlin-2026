@@ -64,12 +64,13 @@ def test_devices_differ_in_transport_not_just_in_labels():
     a_dev, a = solved("A")
     b_dev, b = solved("B")
     assert b_dev["B_0"] > a_dev["B_0"]
-    # Gyro-Bohm: chi scales as 1/B^2, so the high-field device must be stiffer.
+    # At fixed temperature and size, the gyro-Bohm scale varies as 1/B^2.
+    # These configured devices also differ in size and reference temperature.
     assert b["chi_gb"] < a["chi_gb"] / 2.0
 
 
 def test_weakly_heated_profile_stays_below_the_critical_gradient():
-    """C is unidentifiable because it is flat, not because it is labelled flat."""
+    """C's solved profile fails the demo's chosen applicability threshold."""
     dev, c = solved("C", 0.001)
     r_over_lt = (
         dev["R_major"]

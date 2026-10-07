@@ -3,3 +3,7 @@
 __pycache__/
 preview-*.png
 .exports/
+
+# Personal rehearsal material; keep out of published presentation sources.
+speaker_deep_dive.txt
+~$*.pptx
